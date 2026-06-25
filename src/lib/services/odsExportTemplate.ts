@@ -32,6 +32,7 @@ function buildReferenceSheet(store: ProjectStore): XLSX.WorkSheet {
 		[COL.perturbateur, 'vide · Z · Z+ (élève perturbateur)'],
 		[COL.originClass, 'texte libre (classe précédente)'],
 		[COL.futureClass, 'laisser vide — rempli par l’application'],
+		['Colonnes après « Future classe »', 'une par option du niveau — mettre X si l’élève suit l’option'],
 		[]
 	];
 

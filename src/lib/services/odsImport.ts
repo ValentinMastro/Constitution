@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 import type { ProjectStore } from '../store/project.svelte';
 import type { Academic, Moteur, Perturbateur, Sex, Student } from '../types';
 import { classesOfLevel, optionsOf } from '../domain/options';
-import { COL, levelSheetNames, optionColumnsForLevel } from './odsSchema';
+import { COL, extraOptionColumnsForLevel, levelSheetNames, optionColumnsForLevel } from './odsSchema';
 
 export interface ImportResult {
 	students: Student[];
@@ -52,6 +52,7 @@ export function parseWorkbook(store: ProjectStore, wb: XLSX.WorkBook): ImportRes
 
 		const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
 		const optionCols = optionColumnsForLevel(store, levelId);
+		const extraCols = extraOptionColumnsForLevel(store, levelId);
 		const classes = classesOfLevel(store, levelId);
 		let count = 0;
 
@@ -60,20 +61,24 @@ export function parseWorkbook(store: ProjectStore, wb: XLSX.WorkBook): ImportRes
 			const firstName = norm(row[COL.firstName]);
 			if (!lastName && !firstName) continue; // ligne vide
 
-			const optionIds: string[] = [];
+			const optionIds = new Set<string>();
 			for (const col of optionCols) {
 				const cell = norm(row[col.header]);
 				if (!cell) continue;
 				if (col.kind === 'pure') {
-					if (col.optionId && isTruthy(cell)) optionIds.push(col.optionId);
+					if (col.optionId && isTruthy(cell)) optionIds.add(col.optionId);
 				} else {
 					// choix : la cellule contient le nom de l'option choisie.
 					const opt = optionsOf(store, col.groupId).find(
 						(o) => o.name.toLowerCase() === cell.toLowerCase()
 					);
-					if (opt) optionIds.push(opt.id);
+					if (opt) optionIds.add(opt.id);
 					else warnings.push(`${levelName} ligne ${idx + 2} : option « ${cell} » inconnue pour ${col.header}.`);
 				}
+			}
+			// Colonnes « une par option » en fin de feuille : cellule cochée = option suivie.
+			for (const col of extraCols) {
+				if (isTruthy(norm(row[col.header]))) optionIds.add(col.optionId);
 			}
 
 			const futureName = norm(row[COL.futureClass]);
@@ -91,7 +96,7 @@ export function parseWorkbook(store: ProjectStore, wb: XLSX.WorkBook): ImportRes
 				moteur: parseMoteur(norm(row[COL.moteur])),
 				perturbateur: parsePerturbateur(norm(row[COL.perturbateur])),
 				originClass: norm(row[COL.originClass]),
-				optionIds,
+				optionIds: [...optionIds],
 				assignedClassId: assigned
 			});
 			count++;

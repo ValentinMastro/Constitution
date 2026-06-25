@@ -51,12 +51,34 @@ export function optionColumnsForLevel(store: ProjectStore, levelId: string): Opt
 	return cols;
 }
 
+/** Une colonne « une par option », ajoutée tout à droite (après Future classe). */
+export interface ExtraOptionColumn {
+	header: string;
+	optionId: string;
+}
+
+/**
+ * Colonnes ajoutées en fin de feuille : une par option du niveau (toutes les
+ * options de tous les groupes applicables, à plat). Vides dans le modèle, à
+ * remplir par le secrétariat.
+ */
+export function extraOptionColumnsForLevel(
+	store: ProjectStore,
+	levelId: string
+): ExtraOptionColumn[] {
+	const cols: ExtraOptionColumn[] = [];
+	for (const g of groupsForLevel(store, levelId))
+		for (const o of optionsOf(store, g.id)) cols.push({ header: o.name, optionId: o.id });
+	return cols;
+}
+
 /** En-têtes complets d'une feuille de niveau (ordre des colonnes). */
 export function headersForLevel(store: ProjectStore, levelId: string): string[] {
 	return [
 		...FIXED_BEFORE,
 		...optionColumnsForLevel(store, levelId).map((c) => c.header),
-		...FIXED_AFTER
+		...FIXED_AFTER,
+		...extraOptionColumnsForLevel(store, levelId).map((c) => c.header)
 	];
 }
 
