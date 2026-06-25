@@ -12,6 +12,13 @@
 
 	let { children } = $props();
 
+	// Menu latéral rétractable (préférence mémorisée), pour gagner de la place.
+	let navCollapsed = $state(browser && localStorage.getItem('navCollapsed') === '1');
+	function toggleNav() {
+		navCollapsed = !navCollapsed;
+		if (browser) localStorage.setItem('navCollapsed', navCollapsed ? '1' : '0');
+	}
+
 	// Réouvre automatiquement le dernier projet après un rechargement (SPA),
 	// et rétablit la collaboration P2P si elle était active pour ce projet.
 	if (browser && !project.current) {
@@ -38,11 +45,23 @@
 </svelte:head>
 
 {#if current}
-	<div class="grid h-screen grid-cols-[15rem_1fr] grid-rows-[auto_1fr]">
+	<div
+		class="grid h-screen grid-rows-[auto_1fr] {navCollapsed
+			? 'grid-cols-[3.5rem_1fr]'
+			: 'grid-cols-[15rem_1fr]'}"
+	>
 		<header
 			class="col-span-2 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2"
 		>
 			<div class="flex items-baseline gap-3">
+				<button
+					class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+					title={navCollapsed ? 'Déplier le menu' : 'Replier le menu'}
+					aria-label={navCollapsed ? 'Déplier le menu' : 'Replier le menu'}
+					onclick={toggleNav}
+				>
+					{#if navCollapsed}»{:else}«{/if}
+				</button>
 				<span class="text-sm font-semibold text-slate-500">Constitution des classes</span>
 				<span class="text-base font-bold">{current.estName || meta?.name}</span>
 			</div>
@@ -60,18 +79,19 @@
 			</div>
 		</header>
 
-		<nav class="border-r border-slate-200 bg-white p-3">
+		<nav class="border-r border-slate-200 bg-white {navCollapsed ? 'p-2' : 'p-3'}">
 			<ul class="space-y-1">
 				{#each steps as s (s.href)}
 					{@const active = page.url.pathname.startsWith(s.href)}
 					<li>
 						<a
 							href={s.href}
-							class="block rounded-lg px-3 py-2 transition-colors {active
-								? 'bg-indigo-600 text-white'
-								: 'hover:bg-slate-100'}"
+							title={navCollapsed ? `${s.label} — ${s.hint}` : undefined}
+							class="block rounded-lg transition-colors {navCollapsed
+								? 'p-1'
+								: 'px-3 py-2'} {active ? 'bg-indigo-600 text-white' : 'hover:bg-slate-100'}"
 						>
-							<span class="flex items-center gap-2">
+							<span class="flex items-center gap-2 {navCollapsed ? 'justify-center' : ''}">
 								<span
 									class="grid h-6 w-6 place-items-center rounded-full text-xs font-bold {active
 										? 'bg-white/20'
@@ -79,11 +99,13 @@
 								>
 									{s.num}
 								</span>
-								<span class="font-medium">{s.label}</span>
+								{#if !navCollapsed}<span class="font-medium">{s.label}</span>{/if}
 							</span>
-							<span class="ml-8 block text-xs {active ? 'text-indigo-100' : 'text-slate-400'}">
-								{s.hint}
-							</span>
+							{#if !navCollapsed}
+								<span class="ml-8 block text-xs {active ? 'text-indigo-100' : 'text-slate-400'}">
+									{s.hint}
+								</span>
+							{/if}
 						</a>
 					</li>
 				{/each}
