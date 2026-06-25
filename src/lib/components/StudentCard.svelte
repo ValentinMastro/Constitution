@@ -12,7 +12,8 @@
 		withSet,
 		apartSet,
 		onhover,
-		onpin
+		onpin,
+		onlongpress
 	}: {
 		store: ProjectStore;
 		student: Student;
@@ -21,7 +22,36 @@
 		apartSet: Set<string>;
 		onhover: (id: string | null) => void;
 		onpin: (id: string) => void;
+		onlongpress?: (student: Student) => void;
 	} = $props();
+
+	// Appui long (mobile) : maintien immobile ~500 ms → menu de déplacement.
+	// Un déplacement (drag/scroll) annule le timer ; le clic suivant est neutralisé.
+	let pressTimer: ReturnType<typeof setTimeout> | null = null;
+	let pressX = 0;
+	let pressY = 0;
+	let longPressed = false;
+
+	function clearPress() {
+		if (pressTimer) clearTimeout(pressTimer);
+		pressTimer = null;
+	}
+	function onTouchStart(e: TouchEvent) {
+		if (!onlongpress) return;
+		const t = e.touches[0];
+		pressX = t.clientX;
+		pressY = t.clientY;
+		longPressed = false;
+		clearPress();
+		pressTimer = setTimeout(() => {
+			longPressed = true;
+			onlongpress?.(student);
+		}, 500);
+	}
+	function onTouchMove(e: TouchEvent) {
+		const t = e.touches[0];
+		if (Math.abs(t.clientX - pressX) > 10 || Math.abs(t.clientY - pressY) > 10) clearPress();
+	}
 
 	const problems = $derived(studentProblems(store, student));
 	const linked = $derived(linksOf(store, student.id).length > 0);
@@ -60,7 +90,18 @@
 		: 'border-slate-200 bg-white'} {ring} {dimmed ? 'opacity-40' : ''}"
 	onmouseenter={() => onhover(student.id)}
 	onmouseleave={() => onhover(null)}
-	onclick={() => onpin(student.id)}
+	ontouchstart={onTouchStart}
+	ontouchmove={onTouchMove}
+	ontouchend={clearPress}
+	ontouchcancel={clearPress}
+	oncontextmenu={(e) => e.preventDefault()}
+	onclick={() => {
+		if (longPressed) {
+			longPressed = false;
+			return;
+		}
+		onpin(student.id);
+	}}
 	onkeydown={(e) => e.key === 'Enter' && onpin(student.id)}
 >
 	<div class="flex items-center gap-1">

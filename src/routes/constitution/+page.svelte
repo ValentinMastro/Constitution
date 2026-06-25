@@ -1,6 +1,7 @@
 <script lang="ts">
 	import ClassColumn from '$lib/components/ClassColumn.svelte';
-	import { classesOfLevel, optionsForLevel } from '$lib/domain/options';
+	import StudentClassMenu from '$lib/components/StudentClassMenu.svelte';
+	import { classesOfLevel, isOffered, optionsForLevel } from '$lib/domain/options';
 	import { partnersOf } from '$lib/domain/students';
 	import { exportResults } from '$lib/services/odsExportResults';
 	import { project } from '$lib/store/project.svelte';
@@ -59,6 +60,59 @@
 		store.students.items.filter((s) => s.levelId === levelId && s.assignedClassId).length
 	);
 	const totalLevel = $derived(store.students.items.filter((s) => s.levelId === levelId).length);
+
+	// ── Vue mobile : carrousel d'une zone à la fois + menu de déplacement ──────
+	type Zone = { id: string; name: string; capacity: number | null; unplaced: boolean };
+	const zones = $derived<Zone[]>([
+		{ id: UNPLACED, name: 'Non affectés', capacity: null, unplaced: true },
+		...classes.map((c) => ({ id: c.id, name: c.name, capacity: c.capacity, unplaced: false }))
+	]);
+	let mobileIndex = $state(0);
+	// Réinitialise au changement de niveau (les zones changent).
+	$effect(() => {
+		void levelId;
+		mobileIndex = 0;
+	});
+	const current = $derived(zones[mobileIndex] ?? zones[0]);
+	function go(d: number) {
+		mobileIndex = (mobileIndex + d + zones.length) % zones.length;
+	}
+
+	// Détection de swipe horizontal sur le conteneur de la colonne mobile.
+	let touchX = 0;
+	let touchY = 0;
+	function onTouchStart(e: TouchEvent) {
+		touchX = e.changedTouches[0].clientX;
+		touchY = e.changedTouches[0].clientY;
+	}
+	function onTouchEnd(e: TouchEvent) {
+		const dx = e.changedTouches[0].clientX - touchX;
+		const dy = e.changedTouches[0].clientY - touchY;
+		if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
+	}
+
+	// Menu de déplacement (appui long sur une carte).
+	let menuStudent = $state<Student | null>(null);
+	const canAccept = (s: Student, zoneId: string) =>
+		zoneId === UNPLACED || s.optionIds.every((id) => isOffered(store, zoneId, id));
+	const menuZones = $derived.by(() => {
+		const s = menuStudent;
+		if (!s) return [];
+		const currentZone = s.assignedClassId ?? UNPLACED;
+		return zones
+			.filter((z) => z.id !== currentZone)
+			.map((z) => ({
+				id: z.id,
+				name: z.name,
+				capacity: z.capacity,
+				count: board[z.id]?.length ?? 0,
+				canAccept: canAccept(s, z.id)
+			}));
+	});
+	function moveTo(zoneId: string) {
+		if (menuStudent) store.students.update(menuStudent.id, { assignedClassId: zoneId === UNPLACED ? null : zoneId });
+		menuStudent = null;
+	}
 </script>
 
 <div class="flex h-full flex-col">
@@ -92,7 +146,8 @@
 	</header>
 
 	{#if levelId}
-		<div class="flex min-h-0 flex-1 gap-2">
+		<!-- Vue PC : toutes les colonnes côte à côte. -->
+		<div class="hidden min-h-0 flex-1 gap-2 md:flex">
 			<div class="flex h-full w-44 shrink-0">
 				<ClassColumn
 					{store}
@@ -128,7 +183,66 @@
 				{/each}
 			</div>
 		</div>
+
+		<!-- Vue mobile : une seule zone à la fois, swipe pour naviguer (en boucle). -->
+		<div class="flex min-h-0 flex-1 flex-col md:hidden">
+			<div class="mb-2 flex items-center justify-between gap-2">
+				<button
+					class="rounded-lg border border-slate-200 px-3 py-1 text-lg leading-none text-slate-600 hover:bg-slate-50"
+					aria-label="Zone précédente"
+					onclick={() => go(-1)}>‹</button
+				>
+				<div class="flex min-w-0 flex-col items-center">
+					<span class="truncate text-sm font-semibold">{current.name}</span>
+					<div class="mt-0.5 flex gap-1">
+						{#each zones as z, i (z.id)}
+							<span
+								class="h-1.5 w-1.5 rounded-full {i === mobileIndex ? 'bg-indigo-600' : 'bg-slate-300'}"
+							></span>
+						{/each}
+					</div>
+				</div>
+				<button
+					class="rounded-lg border border-slate-200 px-3 py-1 text-lg leading-none text-slate-600 hover:bg-slate-50"
+					aria-label="Zone suivante"
+					onclick={() => go(1)}>›</button
+				>
+			</div>
+			<div
+				class="min-h-0 flex-1"
+				role="group"
+				aria-label="Colonne {current.name} — glissez pour changer de zone"
+				ontouchstart={onTouchStart}
+				ontouchend={onTouchEnd}
+			>
+				<ClassColumn
+					{store}
+					zoneId={current.id}
+					name={current.name}
+					capacity={current.capacity}
+					items={board[current.id] ?? []}
+					filterable={current.unplaced}
+					filterOptions={current.unplaced ? levelOptions : []}
+					{highlightId}
+					{withSet}
+					{apartSet}
+					{onsort}
+					onhover={(id) => (hoveredId = id)}
+					{onpin}
+					onlongpress={(s) => (menuStudent = s)}
+				/>
+			</div>
+		</div>
 	{:else}
 		<p class="text-slate-400">Définissez des niveaux et des classes, puis importez des élèves.</p>
 	{/if}
 </div>
+
+{#if menuStudent}
+	<StudentClassMenu
+		student={menuStudent}
+		zones={menuZones}
+		onpick={moveTo}
+		onclose={() => (menuStudent = null)}
+	/>
+{/if}

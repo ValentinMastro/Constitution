@@ -19,6 +19,7 @@
 		onsort,
 		onhover,
 		onpin,
+		onlongpress,
 		filterable = false,
 		filterOptions = []
 	}: {
@@ -33,6 +34,7 @@
 		onsort: (zoneId: string, items: Student[], commit: boolean) => void;
 		onhover: (id: string | null) => void;
 		onpin: (id: string) => void;
+		onlongpress?: (student: Student) => void;
 		filterable?: boolean;
 		filterOptions?: OptionItem[];
 	} = $props();
@@ -145,7 +147,7 @@
 		onfinalize={finalize}
 	>
 		{#each displayItems as s (s.id)}
-			<StudentCard {store} student={s} {highlightId} {withSet} {apartSet} {onhover} {onpin} />
+			<StudentCard {store} student={s} {highlightId} {withSet} {apartSet} {onhover} {onpin} {onlongpress} />
 		{/each}
 	</div>
 </div>
