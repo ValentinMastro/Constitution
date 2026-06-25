@@ -1,6 +1,6 @@
 <script lang="ts">
 	import ClassColumn from '$lib/components/ClassColumn.svelte';
-	import { classesOfLevel } from '$lib/domain/options';
+	import { classesOfLevel, optionsForLevel } from '$lib/domain/options';
 	import { partnersOf } from '$lib/domain/students';
 	import { exportResults } from '$lib/services/odsExportResults';
 	import { project } from '$lib/store/project.svelte';
@@ -14,6 +14,7 @@
 	let selectedLevelId = $state('');
 	const levelId = $derived(selectedLevelId || levels[0]?.id || '');
 	const classes = $derived(levelId ? classesOfLevel(store, levelId) : []);
+	const levelOptions = $derived(levelId ? optionsForLevel(store, levelId) : []);
 
 	// Tableau local piloté par le drag&drop, re-dérivé de Yjs hors interaction.
 	let board = $state<Record<string, Student[]>>({});
@@ -99,6 +100,8 @@
 					name="Non affectés"
 					capacity={null}
 					items={board[UNPLACED] ?? []}
+					filterable
+					filterOptions={levelOptions}
 					{highlightId}
 					{withSet}
 					{apartSet}
