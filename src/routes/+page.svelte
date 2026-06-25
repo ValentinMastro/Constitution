@@ -3,6 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { registry } from '$lib/store/registry.svelte';
+	import { project } from '$lib/store/project.svelte';
+	import { sync } from '$lib/sync/webrtc.svelte';
 	import { readProjectFile, type ParsedProjectFile } from '$lib/services/projectFile';
 
 	let newName = $state('');
@@ -17,7 +19,11 @@
 		const code = page.url.searchParams.get('join');
 		if (code) {
 			try {
-				registry.joinShared(code);
+				const meta = registry.joinShared(code);
+				// On arrive sans données (le code ne porte que les métadonnées) : on active
+				// d'emblée la collaboration P2P pour que le projet se remplisse dès qu'un pair
+				// (le PC qui a partagé) est en ligne sur le même serveur de signalisation.
+				if (project.current) sync.connect(project.current, meta.shareKey);
 				goto('/structure/');
 			} catch (e) {
 				joinError = e instanceof Error ? e.message : 'Lien de partage invalide';

@@ -5,12 +5,18 @@ import type { ProjectStore } from '../store/project.svelte';
 const SIGNALING_KEY = 'cc-signaling-url';
 
 /**
- * Serveur de signalisation par défaut. En contexte HTTPS, on impose `wss://`
- * (une page sécurisée ne peut pas ouvrir de WebSocket `ws://` : mixed content).
+ * Serveur de signalisation par défaut : la **même origine** que l'app, sur le
+ * chemin `/signaling` (la signalisation est montée sur le serveur Vite, cf. le
+ * plugin dans `vite.config.ts`). On réutilise ainsi l'hôte, le port ET le
+ * certificat de l'app — un téléphone qui a chargé le site peut se synchroniser
+ * sans accepter de second certificat (impossible en pratique sur mobile pour un
+ * port purement WebSocket). `wss://` est imposé en contexte HTTPS (une page
+ * sécurisée ne peut pas ouvrir de WebSocket `ws://` : mixed content).
  */
 function defaultSignaling(): string {
-	const scheme = browser && location.protocol === 'https:' ? 'wss' : 'ws';
-	return `${scheme}://localhost:4444`;
+	if (!browser) return 'ws://localhost:5173/signaling';
+	const scheme = location.protocol === 'https:' ? 'wss' : 'ws';
+	return `${scheme}://${location.host}/signaling`;
 }
 
 /**
