@@ -3,6 +3,7 @@
 	import type { ProjectStore } from '$lib/store/project.svelte';
 	import type { Student } from '$lib/types';
 	import { classStats } from '$lib/domain/stats';
+	import { optionColor, optionsOfClass } from '$lib/domain/options';
 	import ClassStats from './ClassStats.svelte';
 	import StudentCard from './StudentCard.svelte';
 
@@ -33,6 +34,8 @@
 	} = $props();
 
 	const stats = $derived(classStats(items));
+	// Options offertes par la classe (la zone « Non affectés » n'en a aucune).
+	const options = $derived(optionsOfClass(store, zoneId));
 
 	function consider(e: CustomEvent<DndEvent<Student>>) {
 		onsort(zoneId, e.detail.items, false);
@@ -51,6 +54,13 @@
 			<div class="mt-1"><ClassStats {stats} {capacity} /></div>
 		{:else}
 			<div class="mt-1 text-xs text-slate-400">{stats.total} élève(s)</div>
+		{/if}
+		{#if options.length}
+			<div class="mt-1 flex flex-wrap gap-0.5">
+				{#each options as option (option.id)}
+					<span class="rounded px-1 text-xs leading-tight {optionColor(option.name)}" title="Option offerte">{option.name}</span>
+				{/each}
+			</div>
 		{/if}
 	</header>
 

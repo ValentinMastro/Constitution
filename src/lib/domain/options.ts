@@ -98,3 +98,33 @@ export function classesOfLevel(store: ProjectStore, levelId: string): ClassRoom[
 		.filter((c) => c.levelId === levelId)
 		.sort((a, b) => a.order - b.order);
 }
+
+/** Options offertes par une classe, triées comme dans le niveau. */
+export function optionsOfClass(store: ProjectStore, classId: string): OptionItem[] {
+	const offered = new Set(
+		store.classOptions.items.filter((co) => co.classId === classId).map((co) => co.optionId)
+	);
+	return store.options.items.filter((o) => offered.has(o.id)).sort((a, b) => a.order - b.order);
+}
+
+// ── Couleurs d'options ──────────────────────────────────────────────────────
+// Palette Tailwind ; une couleur stable par option (hash du nom), partagée par
+// les cartes d'élèves et les en-têtes de classes.
+const OPTION_COLORS = [
+	'bg-sky-100 text-sky-700',
+	'bg-violet-100 text-violet-700',
+	'bg-teal-100 text-teal-700',
+	'bg-orange-100 text-orange-700',
+	'bg-fuchsia-100 text-fuchsia-700',
+	'bg-lime-100 text-lime-700',
+	'bg-cyan-100 text-cyan-700',
+	'bg-rose-100 text-rose-700',
+	'bg-indigo-100 text-indigo-700',
+	'bg-amber-100 text-amber-700'
+];
+
+export function optionColor(name: string): string {
+	let h = 0;
+	for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
+	return OPTION_COLORS[Math.abs(h) % OPTION_COLORS.length];
+}
