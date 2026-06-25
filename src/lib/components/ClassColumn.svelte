@@ -146,7 +146,7 @@
 	</header>
 
 	<div
-		class="space-y-1 p-1.5 {autoHeight ? '' : 'flex-1 overflow-y-auto'}"
+		class="space-y-0.5 p-1.5 {autoHeight ? '' : 'flex-1 overflow-y-auto'}"
 		use:dndzone={{ items: displayItems, flipDurationMs: 150, dragDisabled: dndDisabled, dropTargetStyle: { outline: '2px dashed #6366f1' } }}
 		onconsider={consider}
 		onfinalize={finalize}

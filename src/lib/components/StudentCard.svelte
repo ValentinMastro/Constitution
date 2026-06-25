@@ -58,7 +58,7 @@
 	role="button"
 	tabindex="0"
 	title={problems.length ? problems.join('\n') : studentLabel(student)}
-	class="flex flex-col gap-0.5 rounded border px-1.5 py-1 text-xs select-none {onselect
+	class="flex flex-col rounded border px-1.5 py-0.5 text-xs leading-tight select-none {onselect
 		? 'cursor-pointer'
 		: 'cursor-grab'} {problems.length
 		? 'border-red-400 bg-red-50'
