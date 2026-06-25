@@ -110,17 +110,15 @@ export function optionsOfClass(store: ProjectStore, classId: string): OptionItem
 // ── Couleurs d'options ──────────────────────────────────────────────────────
 // Palette Tailwind ; une couleur stable par option (hash du nom), partagée par
 // les cartes d'élèves et les en-têtes de classes.
+// Teintes volontairement éloignées les unes des autres et des couleurs réservées :
+// rose/bleu (fond F/G), rouge (problème), émeraude (M), ambre (Z), violet/indigo (🔗).
 const OPTION_COLORS = [
-	'bg-sky-100 text-sky-700',
-	'bg-violet-100 text-violet-700',
-	'bg-teal-100 text-teal-700',
-	'bg-orange-100 text-orange-700',
-	'bg-fuchsia-100 text-fuchsia-700',
-	'bg-lime-100 text-lime-700',
-	'bg-cyan-100 text-cyan-700',
-	'bg-rose-100 text-rose-700',
-	'bg-indigo-100 text-indigo-700',
-	'bg-amber-100 text-amber-700'
+	'bg-orange-100 text-orange-700 border-orange-700',
+	'bg-teal-100 text-teal-700 border-teal-700',
+	'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-700',
+	'bg-lime-100 text-lime-700 border-lime-700',
+	'bg-purple-100 text-purple-700 border-purple-700',
+	'bg-stone-200 text-stone-700 border-stone-700'
 ];
 
 export function optionColor(name: string): string {
