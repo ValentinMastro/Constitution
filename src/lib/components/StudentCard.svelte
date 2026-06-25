@@ -13,7 +13,7 @@
 		apartSet,
 		onhover,
 		onpin,
-		onlongpress
+		onselect
 	}: {
 		store: ProjectStore;
 		student: Student;
@@ -22,36 +22,9 @@
 		apartSet: Set<string>;
 		onhover: (id: string | null) => void;
 		onpin: (id: string) => void;
-		onlongpress?: (student: Student) => void;
+		// Mobile : si fourni, un simple tap appelle onselect au lieu d'épingler les liens.
+		onselect?: (student: Student) => void;
 	} = $props();
-
-	// Appui long (mobile) : maintien immobile ~500 ms → menu de déplacement.
-	// Un déplacement (drag/scroll) annule le timer ; le clic suivant est neutralisé.
-	let pressTimer: ReturnType<typeof setTimeout> | null = null;
-	let pressX = 0;
-	let pressY = 0;
-	let longPressed = false;
-
-	function clearPress() {
-		if (pressTimer) clearTimeout(pressTimer);
-		pressTimer = null;
-	}
-	function onTouchStart(e: TouchEvent) {
-		if (!onlongpress) return;
-		const t = e.touches[0];
-		pressX = t.clientX;
-		pressY = t.clientY;
-		longPressed = false;
-		clearPress();
-		pressTimer = setTimeout(() => {
-			longPressed = true;
-			onlongpress?.(student);
-		}, 500);
-	}
-	function onTouchMove(e: TouchEvent) {
-		const t = e.touches[0];
-		if (Math.abs(t.clientX - pressX) > 10 || Math.abs(t.clientY - pressY) > 10) clearPress();
-	}
 
 	const problems = $derived(studentProblems(store, student));
 	const linked = $derived(linksOf(store, student.id).length > 0);
@@ -85,24 +58,15 @@
 	role="button"
 	tabindex="0"
 	title={problems.length ? problems.join('\n') : studentLabel(student)}
-	class="flex cursor-grab flex-col gap-0.5 rounded border px-1.5 py-1 text-xs select-none {problems.length
+	class="flex flex-col gap-0.5 rounded border px-1.5 py-1 text-xs select-none {onselect
+		? 'cursor-pointer'
+		: 'cursor-grab'} {problems.length
 		? 'border-red-400 bg-red-50'
 		: 'border-slate-200 bg-white'} {ring} {dimmed ? 'opacity-40' : ''}"
 	onmouseenter={() => onhover(student.id)}
 	onmouseleave={() => onhover(null)}
-	ontouchstart={onTouchStart}
-	ontouchmove={onTouchMove}
-	ontouchend={clearPress}
-	ontouchcancel={clearPress}
-	oncontextmenu={(e) => e.preventDefault()}
-	onclick={() => {
-		if (longPressed) {
-			longPressed = false;
-			return;
-		}
-		onpin(student.id);
-	}}
-	onkeydown={(e) => e.key === 'Enter' && onpin(student.id)}
+	onclick={() => (onselect ? onselect(student) : onpin(student.id))}
+	onkeydown={(e) => e.key === 'Enter' && (onselect ? onselect(student) : onpin(student.id))}
 >
 	<div class="flex items-center gap-1">
 		{#if problems.length}<span class="text-red-500" aria-label="problème">⚠</span>{/if}

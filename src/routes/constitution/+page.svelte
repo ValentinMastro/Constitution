@@ -115,8 +115,8 @@
 	}
 </script>
 
-<div class="flex h-full flex-col">
-	<header class="mb-3 flex items-center gap-3">
+<div class="flex flex-col md:h-full">
+	<header class="mb-3 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
 		<h1 class="text-xl font-bold">Constitution</h1>
 		{#if levels.length > 1}
 			<select class="rounded-lg border border-slate-300 px-2 py-1 text-sm" bind:value={selectedLevelId}>
@@ -184,8 +184,9 @@
 			</div>
 		</div>
 
-		<!-- Vue mobile : une seule zone à la fois, swipe pour naviguer (en boucle). -->
-		<div class="flex min-h-0 flex-1 flex-col md:hidden">
+		<!-- Vue mobile : une seule zone à la fois, swipe pour naviguer (en boucle).
+		     La colonne grandit avec son contenu (scroll de page), pas de scroll interne. -->
+		<div class="flex flex-col md:hidden">
 			<div class="mb-2 flex items-center justify-between gap-2">
 				<button
 					class="rounded-lg border border-slate-200 px-3 py-1 text-lg leading-none text-slate-600 hover:bg-slate-50"
@@ -209,7 +210,6 @@
 				>
 			</div>
 			<div
-				class="min-h-0 flex-1"
 				role="group"
 				aria-label="Colonne {current.name} — glissez pour changer de zone"
 				ontouchstart={onTouchStart}
@@ -229,7 +229,9 @@
 					{onsort}
 					onhover={(id) => (hoveredId = id)}
 					{onpin}
-					onlongpress={(s) => (menuStudent = s)}
+					onselect={(s) => (menuStudent = s)}
+					dndDisabled
+					autoHeight
 				/>
 			</div>
 		</div>

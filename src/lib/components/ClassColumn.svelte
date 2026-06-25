@@ -19,7 +19,9 @@
 		onsort,
 		onhover,
 		onpin,
-		onlongpress,
+		onselect,
+		dndDisabled = false,
+		autoHeight = false,
 		filterable = false,
 		filterOptions = []
 	}: {
@@ -34,7 +36,10 @@
 		onsort: (zoneId: string, items: Student[], commit: boolean) => void;
 		onhover: (id: string | null) => void;
 		onpin: (id: string) => void;
-		onlongpress?: (student: Student) => void;
+		onselect?: (student: Student) => void;
+		// Mobile : désactive le drag&drop et laisse la colonne grandir avec son contenu.
+		dndDisabled?: boolean;
+		autoHeight?: boolean;
 		filterable?: boolean;
 		filterOptions?: OptionItem[];
 	} = $props();
@@ -96,7 +101,7 @@
 	}
 </script>
 
-<div class="flex h-full min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50">
+<div class="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50 {autoHeight ? '' : 'h-full'}">
 	<header class="border-b border-slate-200 px-2 py-1.5">
 		<div class="flex items-center justify-between">
 			<span class="truncate font-semibold">{name}</span>
@@ -141,13 +146,13 @@
 	</header>
 
 	<div
-		class="flex-1 space-y-1 overflow-y-auto p-1.5"
-		use:dndzone={{ items: displayItems, flipDurationMs: 150, dropTargetStyle: { outline: '2px dashed #6366f1' } }}
+		class="space-y-1 p-1.5 {autoHeight ? '' : 'flex-1 overflow-y-auto'}"
+		use:dndzone={{ items: displayItems, flipDurationMs: 150, dragDisabled: dndDisabled, dropTargetStyle: { outline: '2px dashed #6366f1' } }}
 		onconsider={consider}
 		onfinalize={finalize}
 	>
 		{#each displayItems as s (s.id)}
-			<StudentCard {store} student={s} {highlightId} {withSet} {apartSet} {onhover} {onpin} {onlongpress} />
+			<StudentCard {store} student={s} {highlightId} {withSet} {apartSet} {onhover} {onpin} {onselect} />
 		{/each}
 	</div>
 </div>
