@@ -1,7 +1,7 @@
 <script lang="ts">
 	import StudentPanel from '$lib/components/StudentPanel.svelte';
 	import { project } from '$lib/store/project.svelte';
-	import type { Academic, Behavior, Sex, Student } from '$lib/types';
+	import type { Academic, Moteur, Perturbateur, Sex, Student } from '$lib/types';
 	import {
 		addStudent,
 		linksOf,
@@ -56,7 +56,8 @@
 
 	const SEX: Sex[] = ['F', 'G'];
 	const ACAD: Academic[] = ['A', 'B', 'C', 'D'];
-	const BEHAV: Behavior[] = ['M', 'M+', 'Z', 'Z+'];
+	const MOTEUR: Moteur[] = ['M', 'M+'];
+	const PERTURB: Perturbateur[] = ['Z', 'Z+'];
 </script>
 
 <div class="flex h-full">
@@ -99,7 +100,8 @@
 						<th class="cursor-pointer px-2 py-2" onclick={() => sortBy('firstName')}>Prénom{arrow('firstName')}</th>
 						<th class="cursor-pointer px-2 py-2" onclick={() => sortBy('sex')}>Sexe{arrow('sex')}</th>
 						<th class="cursor-pointer px-2 py-2" onclick={() => sortBy('academic')}>Niv.{arrow('academic')}</th>
-						<th class="cursor-pointer px-2 py-2" onclick={() => sortBy('behavior')}>Profil{arrow('behavior')}</th>
+						<th class="cursor-pointer px-2 py-2" onclick={() => sortBy('moteur')}>Mot.{arrow('moteur')}</th>
+						<th class="cursor-pointer px-2 py-2" onclick={() => sortBy('perturbateur')}>Pert.{arrow('perturbateur')}</th>
 						<th class="cursor-pointer px-2 py-2" onclick={() => sortBy('originClass')}>Origine{arrow('originClass')}</th>
 						<th class="cursor-pointer px-2 py-2" onclick={() => sortBy('levelId')}>Niveau{arrow('levelId')}</th>
 						<th class="px-2 py-2">Options</th>
@@ -136,9 +138,15 @@
 								</select>
 							</td>
 							<td class="px-1 py-1">
-								<select class="rounded bg-transparent px-1 py-0.5" value={s.behavior} onclick={(e) => e.stopPropagation()} onchange={(e) => store.students.update(s.id, { behavior: e.currentTarget.value as Behavior })}>
+								<select class="rounded bg-transparent px-1 py-0.5" value={s.moteur} onclick={(e) => e.stopPropagation()} onchange={(e) => store.students.update(s.id, { moteur: e.currentTarget.value as Moteur })}>
 									<option value=""></option>
-									{#each BEHAV as v (v)}<option value={v}>{v}</option>{/each}
+									{#each MOTEUR as v (v)}<option value={v}>{v}</option>{/each}
+								</select>
+							</td>
+							<td class="px-1 py-1">
+								<select class="rounded bg-transparent px-1 py-0.5" value={s.perturbateur} onclick={(e) => e.stopPropagation()} onchange={(e) => store.students.update(s.id, { perturbateur: e.currentTarget.value as Perturbateur })}>
+									<option value=""></option>
+									{#each PERTURB as v (v)}<option value={v}>{v}</option>{/each}
 								</select>
 							</td>
 							<td class="px-1 py-1">
@@ -168,7 +176,7 @@
 						</tr>
 					{/each}
 					{#if filtered.length === 0}
-						<tr><td class="px-4 py-6 text-center text-slate-400" colspan="10">Aucun élève. Importez le tableau .ods ou ajoutez-en.</td></tr>
+						<tr><td class="px-4 py-6 text-center text-slate-400" colspan="11">Aucun élève. Importez le tableau .ods ou ajoutez-en.</td></tr>
 					{/if}
 				</tbody>
 			</table>

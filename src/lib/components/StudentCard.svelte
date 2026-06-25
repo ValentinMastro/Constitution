@@ -61,9 +61,10 @@
 		{student.sex || '·'}
 	</span>
 	<span class="w-3 text-center font-semibold text-slate-500">{student.academic || '·'}</span>
-	{#if student.behavior}
-		<span class="rounded px-1 {student.behavior.startsWith('M') ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
-			{student.behavior}
-		</span>
+	{#if student.moteur}
+		<span class="rounded bg-emerald-100 px-1 text-emerald-700" title="Moteur">{student.moteur}</span>
+	{/if}
+	{#if student.perturbateur}
+		<span class="rounded bg-amber-100 px-1 text-amber-700" title="Perturbateur">{student.perturbateur}</span>
 	{/if}
 </div>

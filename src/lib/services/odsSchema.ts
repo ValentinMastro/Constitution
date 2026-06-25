@@ -11,7 +11,8 @@ export const COL = {
 	firstName: 'Prénom',
 	sex: 'Sexe (F/G)',
 	academic: 'Niveau (A-D)',
-	behavior: 'Profil (M/M+/Z/Z+)',
+	moteur: 'Moteur (M/M+)',
+	perturbateur: 'Perturbateur (Z/Z+)',
 	originClass: "Classe d'origine",
 	futureClass: 'Future classe'
 } as const;
@@ -21,7 +22,8 @@ export const FIXED_BEFORE: string[] = [
 	COL.firstName,
 	COL.sex,
 	COL.academic,
-	COL.behavior,
+	COL.moteur,
+	COL.perturbateur,
 	COL.originClass
 ];
 export const FIXED_AFTER: string[] = [COL.futureClass];

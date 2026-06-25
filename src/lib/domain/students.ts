@@ -14,7 +14,8 @@ export function addStudent(store: ProjectStore, levelId: string): Student {
 		firstName: '',
 		sex: '',
 		academic: '',
-		behavior: '',
+		moteur: '',
+		perturbateur: '',
 		originClass: '',
 		optionIds: [],
 		assignedClassId: null

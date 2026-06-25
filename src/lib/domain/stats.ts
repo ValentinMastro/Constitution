@@ -22,8 +22,8 @@ export function classStats(students: Student[]): ClassStats {
 		if (st.sex === 'F') s.filles++;
 		else if (st.sex === 'G') s.garcons++;
 		if (st.academic) s.academic[st.academic]++;
-		if (st.behavior === 'M' || st.behavior === 'M+') s.moteur++;
-		else if (st.behavior === 'Z' || st.behavior === 'Z+') s.perturbateur++;
+		if (st.moteur) s.moteur++;
+		if (st.perturbateur) s.perturbateur++;
 	}
 	return s;
 }

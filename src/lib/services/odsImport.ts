@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import type { ProjectStore } from '../store/project.svelte';
-import type { Academic, Behavior, Sex, Student } from '../types';
+import type { Academic, Moteur, Perturbateur, Sex, Student } from '../types';
 import { classesOfLevel, optionsOf } from '../domain/options';
 import { COL, levelSheetNames, optionColumnsForLevel } from './odsSchema';
 
@@ -24,9 +24,14 @@ function parseAcademic(v: string): Academic | '' {
 	return (['A', 'B', 'C', 'D'] as const).find((x) => x === u) ?? '';
 }
 
-function parseBehavior(v: string): Behavior {
+function parseMoteur(v: string): Moteur {
 	const u = v.toUpperCase().replace(/\s/g, '');
-	return (['M+', 'M', 'Z+', 'Z'] as const).find((x) => x === u) ?? '';
+	return (['M+', 'M'] as const).find((x) => x === u) ?? '';
+}
+
+function parsePerturbateur(v: string): Perturbateur {
+	const u = v.toUpperCase().replace(/\s/g, '');
+	return (['Z+', 'Z'] as const).find((x) => x === u) ?? '';
 }
 
 const isTruthy = (v: string): boolean => /^(x|oui|o|yes|y|1|vrai|true)$/i.test(v.trim());
@@ -83,7 +88,8 @@ export function parseWorkbook(store: ProjectStore, wb: XLSX.WorkBook): ImportRes
 				firstName,
 				sex: parseSex(norm(row[COL.sex])),
 				academic: parseAcademic(norm(row[COL.academic])),
-				behavior: parseBehavior(norm(row[COL.behavior])),
+				moteur: parseMoteur(norm(row[COL.moteur])),
+				perturbateur: parsePerturbateur(norm(row[COL.perturbateur])),
 				originClass: norm(row[COL.originClass]),
 				optionIds,
 				assignedClassId: assigned

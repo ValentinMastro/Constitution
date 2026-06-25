@@ -28,7 +28,8 @@ function buildReferenceSheet(store: ProjectStore): XLSX.WorkSheet {
 		[],
 		[COL.sex, 'F = fille, G = garçon'],
 		[COL.academic, 'A (meilleur) · B · C · D (le moins bon)'],
-		[COL.behavior, 'vide · M · M+ (moteur) · Z · Z+ (perturbateur)'],
+		[COL.moteur, 'vide · M · M+ (élève moteur)'],
+		[COL.perturbateur, 'vide · Z · Z+ (élève perturbateur)'],
 		[COL.originClass, 'texte libre (classe précédente)'],
 		[COL.futureClass, 'laisser vide — rempli par l’application'],
 		[]

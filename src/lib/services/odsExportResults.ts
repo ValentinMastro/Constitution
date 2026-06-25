@@ -6,7 +6,7 @@ import { downloadBlob, safeFileName } from './download';
 import { headersForLevel, levelSheetNames, optionColumnsForLevel, type OptionColumn } from './odsSchema';
 
 function studentRow(store: ProjectStore, s: Student, optionCols: OptionColumn[]): string[] {
-	const before = [s.lastName, s.firstName, s.sex, s.academic, s.behavior, s.originClass];
+	const before = [s.lastName, s.firstName, s.sex, s.academic, s.moteur, s.perturbateur, s.originClass];
 
 	const opts = optionCols.map((col) => {
 		if (col.kind === 'choix') {

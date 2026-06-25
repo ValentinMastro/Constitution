@@ -52,8 +52,10 @@ export interface ClassOption {
 
 export type Sex = 'F' | 'G';
 export type Academic = 'A' | 'B' | 'C' | 'D';
-/** Moteur (M/M+) ou perturbateur (Z/Z+), ou rien. */
-export type Behavior = '' | 'M' | 'M+' | 'Z' | 'Z+';
+/** Moteur (élève moteur) : rien, M ou M+. */
+export type Moteur = '' | 'M' | 'M+';
+/** Perturbateur : rien, Z ou Z+. */
+export type Perturbateur = '' | 'Z' | 'Z+';
 
 export interface Student {
 	id: Id;
@@ -62,7 +64,10 @@ export interface Student {
 	firstName: string;
 	sex: Sex | '';
 	academic: Academic | '';
-	behavior: Behavior;
+	/** Niveau « moteur » (M/M+), indépendant du caractère perturbateur. */
+	moteur: Moteur;
+	/** Niveau « perturbateur » (Z/Z+), indépendant du caractère moteur. */
+	perturbateur: Perturbateur;
 	originClass: string;
 	/** ids des OptionItem choisis par l'élève. */
 	optionIds: Id[];
