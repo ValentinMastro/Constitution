@@ -68,10 +68,7 @@
 	onclick={() => (onselect ? onselect(student) : onpin(student.id))}
 	onkeydown={(e) => e.key === 'Enter' && (onselect ? onselect(student) : onpin(student.id))}
 >
-	<div class="flex items-center gap-1">
-		{#if problems.length}<span class="text-red-500" aria-label="problème">⚠</span>{/if}
-		<span class="min-w-0 flex-1 truncate font-medium text-slate-800">{studentLabel(student)}</span>
-		{#if linked}<span class="text-indigo-500" aria-label="liens">🔗</span>{/if}
+	{#snippet badges()}
 		<span class="rounded px-1 {student.sex === 'F' ? 'bg-pink-100 text-pink-700' : student.sex === 'G' ? 'bg-blue-100 text-blue-700' : 'text-slate-300'}">
 			{student.sex || '·'}
 		</span>
@@ -82,12 +79,24 @@
 		{#if student.perturbateur}
 			<span class="rounded bg-amber-100 px-1 text-amber-700" title="Perturbateur">{student.perturbateur}</span>
 		{/if}
+	{/snippet}
+
+	<div class="flex items-center gap-1">
+		{#if problems.length}<span class="text-red-500" aria-label="problème">⚠</span>{/if}
+		<span class="min-w-0 flex-1 truncate font-medium text-slate-800">{studentLabel(student)}</span>
+		{#if linked}<span class="text-indigo-500" aria-label="liens">🔗</span>{/if}
+		<!-- Sans option : tout tient sur la 1ère ligne (inchangé). -->
+		{#if !options.length}{@render badges()}{/if}
 	</div>
 	{#if options.length}
-		<div class="flex flex-wrap gap-0.5">
-			{#each options as option (option.id)}
-				<span class="rounded px-1 leading-tight {optionColor(option.name)}" title="Option">{option.name}</span>
-			{/each}
+		<!-- Avec options : 2e ligne = options à gauche, badges F/G A/B/C/D M/Z à la fin. -->
+		<div class="flex items-center gap-1">
+			<div class="flex min-w-0 flex-1 flex-wrap gap-0.5">
+				{#each options as option (option.id)}
+					<span class="rounded px-1 leading-tight {optionColor(option.name)}" title="Option">{option.name}</span>
+				{/each}
+			</div>
+			{@render badges()}
 		</div>
 	{/if}
 </div>
