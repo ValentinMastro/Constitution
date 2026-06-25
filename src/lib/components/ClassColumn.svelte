@@ -102,7 +102,7 @@
 </script>
 
 <div class="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50 {autoHeight ? '' : 'h-full'}">
-	<header class="border-b border-slate-200 px-2 py-1.5">
+	<header class="border-b border-slate-200 px-2 py-1">
 		<div class="flex items-center gap-1">
 			<span class="min-w-0 flex-1 truncate font-semibold">{name}</span>
 			{#if options.length}
@@ -114,7 +114,7 @@
 			{/if}
 		</div>
 		{#if filterable}
-			<div class="mt-1 flex flex-wrap items-center gap-0.5">
+			<div class="mt-0.5 flex flex-wrap items-center gap-0.5">
 				{#each FILTER_GROUPS as group, i (group)}
 					{#if i > 0}<span class="w-1"></span>{/if}
 					{#each FILTERS.filter((f) => f.group === group) as f (f.key)}
@@ -137,11 +137,11 @@
 			</div>
 		{/if}
 		{#if capacity !== null}
-			<div class="mt-1"><ClassStats {stats} {capacity} /></div>
+			<div class="mt-0.5"><ClassStats {stats} {capacity} /></div>
 		{:else if filtering}
-			<div class="mt-1 text-xs text-slate-400">{displayItems.length} / {items.length} élève(s)</div>
+			<div class="mt-0.5 text-xs text-slate-400">{displayItems.length} / {items.length} élève(s)</div>
 		{:else}
-			<div class="mt-1 text-xs text-slate-400">{stats.total} élève(s)</div>
+			<div class="mt-0.5 text-xs text-slate-400">{stats.total} élève(s)</div>
 		{/if}
 	</header>
 

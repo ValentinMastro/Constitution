@@ -5,7 +5,7 @@
 	const over = $derived(stats.total > capacity);
 </script>
 
-<div class="space-y-1 text-xs">
+<div class="space-y-0.5 text-xs">
 	<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 		<span class="font-semibold {over ? 'text-red-600' : 'text-slate-600'}">
 			{stats.total}/{capacity}

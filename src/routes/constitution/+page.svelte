@@ -116,8 +116,8 @@
 </script>
 
 <div class="flex flex-col md:h-full">
-	<header class="mb-3 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
-		<h1 class="text-xl font-bold">Constitution</h1>
+	<header class="mb-2 flex flex-col items-start gap-2 md:flex-row md:items-center md:gap-3">
+		<h1 class="text-lg font-bold">Constitution</h1>
 		{#if levels.length > 1}
 			<select class="rounded-lg border border-slate-300 px-2 py-1 text-sm" bind:value={selectedLevelId}>
 				{#each levels as l (l.id)}<option value={l.id}>{l.name}</option>{/each}
