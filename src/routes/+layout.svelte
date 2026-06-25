@@ -5,7 +5,7 @@
 	import { goto } from '$app/navigation';
 	import favicon from '$lib/assets/favicon.svg';
 	import { steps } from '$lib/nav';
-	import SyncWidget from '$lib/components/SyncWidget.svelte';
+	import ProjectMenu from '$lib/components/ProjectMenu.svelte';
 	import { project } from '$lib/store/project.svelte';
 	import { registry } from '$lib/store/registry.svelte';
 	import { sync } from '$lib/sync/webrtc.svelte';
@@ -66,16 +66,7 @@
 				<span class="text-base font-bold">{current.estName || meta?.name}</span>
 			</div>
 			<div class="flex items-center gap-2">
-				<SyncWidget store={current} />
-				<button
-					class="rounded px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-					onclick={() => {
-						registry.close();
-						goto('/');
-					}}
-				>
-					Fermer le projet
-				</button>
+				<ProjectMenu store={current} />
 			</div>
 		</header>
 
@@ -120,8 +111,15 @@
 			{/if}
 		</main>
 	</div>
-{:else}
+{:else if page.url.pathname === '/'}
 	<main class="min-h-screen">
 		{@render children()}
+	</main>
+{:else}
+	<!-- Aucun projet ouvert sur une route de projet : la garde ci-dessus redirige
+	     vers l'accueil. On n'instancie pas la page (elle suppose un projet courant)
+	     pour éviter un crash le temps de la redirection. -->
+	<main class="grid min-h-screen place-items-center">
+		<p class="text-slate-400">Redirection…</p>
 	</main>
 {/if}

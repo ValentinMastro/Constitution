@@ -1,6 +1,8 @@
+import * as Y from 'yjs';
 import { browser } from '$app/environment';
 import type { ProjectMeta } from '../types';
-import { closeProject, openProject } from './project.svelte';
+import { closeProject, openProject, type ProjectStore } from './project.svelte';
+import type { ParsedProjectFile } from '../services/projectFile';
 
 const STORAGE_KEY = 'cc-projects';
 const LAST_KEY = 'cc-last-project';
@@ -80,6 +82,42 @@ export const registry = {
 		this.close();
 		// Purge la persistance IndexedDB du projet.
 		if (browser && 'indexedDB' in window) indexedDB.deleteDatabase(`cc-project-${id}`);
+	},
+
+	/**
+	 * Importe un projet depuis un fichier exporté, puis l'ouvre.
+	 * - `join` : conserve l'ID/clé d'origine (re-synchronisation P2P possible).
+	 * - `copy` : génère un nouvel ID/clé (copie indépendante).
+	 *
+	 * L'état Yjs du fichier est appliqué au `Y.Doc` du projet ; la fusion CRDT est
+	 * commutative, donc sans course critique avec le chargement IndexedDB et sans
+	 * réapparition des entités supprimées.
+	 */
+	importProject(
+		parsed: ParsedProjectFile,
+		mode: 'join' | 'copy'
+	): { meta: ProjectMeta; screen: string } {
+		const meta: ProjectMeta =
+			mode === 'copy'
+				? {
+						id: crypto.randomUUID(),
+						name: `${parsed.meta.name} (copie)`,
+						shareKey: randomKey(),
+						createdAt: Date.now()
+					}
+				: {
+						id: parsed.meta.id,
+						name: parsed.meta.name,
+						shareKey: parsed.meta.shareKey,
+						createdAt: parsed.meta.createdAt
+					};
+		if (!this.get(meta.id)) {
+			metas = [...metas, meta];
+			persist();
+		}
+		const store: ProjectStore = this.open(meta.id);
+		Y.applyUpdate(store.doc, parsed.update);
+		return { meta, screen: parsed.screen };
 	},
 
 	/** Code de partage (à transmettre à un autre poste) : id + nom + clé. */

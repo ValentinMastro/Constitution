@@ -15,6 +15,9 @@ Thumbs.db
 # Cahier des charges / notes locales
 prompt.txt
 
+# Certificat TLS de dev (auto-signé, généré par `npm run cert`)
+/certs
+
 # Env
 .env
 .env.*

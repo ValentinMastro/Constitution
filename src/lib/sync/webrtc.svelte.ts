@@ -3,7 +3,15 @@ import type { WebrtcProvider } from 'y-webrtc';
 import type { ProjectStore } from '../store/project.svelte';
 
 const SIGNALING_KEY = 'cc-signaling-url';
-const DEFAULT_SIGNALING = 'ws://localhost:4444';
+
+/**
+ * Serveur de signalisation par défaut. En contexte HTTPS, on impose `wss://`
+ * (une page sécurisée ne peut pas ouvrir de WebSocket `ws://` : mixed content).
+ */
+function defaultSignaling(): string {
+	const scheme = browser && location.protocol === 'https:' ? 'wss' : 'ws';
+	return `${scheme}://localhost:4444`;
+}
 
 /**
  * Configuration ICE — STUN UNIQUEMENT (P2P direct strict, pas de relais TURN).
@@ -51,7 +59,7 @@ class SyncController {
 	peers = $state(0);
 	error = $state('');
 	signalingUrl = $state(
-		browser ? (localStorage.getItem(SIGNALING_KEY) ?? DEFAULT_SIGNALING) : DEFAULT_SIGNALING
+		browser ? (localStorage.getItem(SIGNALING_KEY) ?? defaultSignaling()) : defaultSignaling()
 	);
 
 	get active(): boolean {
@@ -70,7 +78,7 @@ class SyncController {
 	}
 
 	setSignaling(url: string) {
-		this.signalingUrl = url.trim() || DEFAULT_SIGNALING;
+		this.signalingUrl = url.trim() || defaultSignaling();
 		if (browser) localStorage.setItem(SIGNALING_KEY, this.signalingUrl);
 	}
 

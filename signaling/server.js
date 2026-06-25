@@ -10,11 +10,31 @@
  * Lancement :  PORT=4444 node signaling/server.js
  */
 import { WebSocketServer } from 'ws';
+import { createServer as createHttpsServer } from 'node:https';
+import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const PORT = Number(process.env.PORT || 4444);
 const PING_TIMEOUT = 30000;
 
-const wss = new WebSocketServer({ port: PORT });
+// TLS (wss://) automatique si le certificat de dev existe (`npm run cert`).
+// Une page servie en HTTPS ne peut pas ouvrir de WebSocket `ws://` (mixed
+// content), donc on s'aligne sur le mode HTTPS du serveur Vite.
+const keyPath = fileURLToPath(new URL('../certs/dev-key.pem', import.meta.url));
+const certPath = fileURLToPath(new URL('../certs/dev-cert.pem', import.meta.url));
+const tls = existsSync(keyPath) && existsSync(certPath);
+
+let wss;
+if (tls) {
+	const httpsServer = createHttpsServer({
+		key: readFileSync(keyPath),
+		cert: readFileSync(certPath)
+	});
+	httpsServer.listen(PORT);
+	wss = new WebSocketServer({ server: httpsServer });
+} else {
+	wss = new WebSocketServer({ port: PORT });
+}
 
 /** topic -> Set<WebSocket> */
 const topics = new Map();
@@ -99,4 +119,6 @@ wss.on('connection', (conn) => {
 	});
 });
 
-console.log(`[signaling] y-webrtc signaling server en écoute sur ws://localhost:${PORT}`);
+console.log(
+	`[signaling] y-webrtc signaling server en écoute sur ${tls ? 'wss' : 'ws'}://localhost:${PORT}`
+);
