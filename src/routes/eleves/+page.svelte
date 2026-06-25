@@ -92,7 +92,7 @@
 			</button>
 		</div>
 
-		<div class="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white">
+		<div class="hidden min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white md:block">
 			<table class="w-full border-collapse text-sm">
 				<thead class="sticky top-0 bg-slate-50">
 					<tr class="border-b border-slate-200 text-left">
@@ -180,6 +180,64 @@
 					{/if}
 				</tbody>
 			</table>
+		</div>
+
+		<!-- Vue mobile : cartes empilées (le tableau ci-dessus est masqué sous md). -->
+		<div class="min-h-0 flex-1 space-y-2 overflow-auto md:hidden">
+			{#each filtered as s (s.id)}
+				{@const withN = partnersOf(store, s.id, 'with').length}
+				{@const apartN = partnersOf(store, s.id, 'apart').length}
+				{@const opts = optionNames(store, s)}
+				<button
+					type="button"
+					class="block w-full rounded-xl border bg-white p-3 text-left {selectedId === s.id
+						? 'border-indigo-400 ring-1 ring-indigo-200'
+						: 'border-slate-200'}"
+					onclick={() => (selectedId = s.id)}
+				>
+					<div class="flex items-start justify-between gap-2">
+						<div class="min-w-0">
+							<p class="truncate font-semibold">{studentLabel(s) || 'Sans nom'}</p>
+							<p class="text-xs text-slate-500">{levelName(s.levelId)}</p>
+						</div>
+						<span
+							role="button"
+							tabindex="0"
+							class="-mt-1 -mr-1 rounded px-2 py-1 text-slate-300 hover:text-red-600"
+							title="Supprimer"
+							onclick={(e) => {
+								e.stopPropagation();
+								if (confirm(`Supprimer ${studentLabel(s)} ?`)) removeStudent(store, s.id);
+							}}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.stopPropagation();
+									if (confirm(`Supprimer ${studentLabel(s)} ?`)) removeStudent(store, s.id);
+								}
+							}}
+						>
+							✕
+						</span>
+					</div>
+					<div class="mt-2 flex flex-wrap gap-1.5 text-xs">
+						{#if s.sex}<span class="rounded bg-slate-100 px-1.5 py-0.5">{s.sex}</span>{/if}
+						{#if s.academic}<span class="rounded bg-slate-100 px-1.5 py-0.5">Niv. {s.academic}</span>{/if}
+						{#if s.moteur}<span class="rounded bg-slate-100 px-1.5 py-0.5">{s.moteur}</span>{/if}
+						{#if s.perturbateur}<span class="rounded bg-slate-100 px-1.5 py-0.5">{s.perturbateur}</span>{/if}
+						{#if s.originClass}<span class="rounded bg-slate-100 px-1.5 py-0.5">{s.originClass}</span>{/if}
+						{#if withN}<span class="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-600">🔗{withN}</span>{/if}
+						{#if apartN}<span class="rounded bg-rose-50 px-1.5 py-0.5 text-rose-600">⛔{apartN}</span>{/if}
+					</div>
+					{#if opts.length}
+						<p class="mt-1.5 text-xs text-slate-500">{opts.join(', ')}</p>
+					{/if}
+				</button>
+			{/each}
+			{#if filtered.length === 0}
+				<p class="px-4 py-6 text-center text-slate-400">
+					Aucun élève. Importez le tableau .ods ou ajoutez-en.
+				</p>
+			{/if}
 		</div>
 	</div>
 

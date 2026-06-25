@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ProjectStore } from '$lib/store/project.svelte';
-	import type { LinkType, Student } from '$lib/types';
+	import type { Academic, LinkType, Moteur, Perturbateur, Sex, Student } from '$lib/types';
 	import {
 		addLink,
 		applicableOptions,
@@ -45,9 +45,18 @@
 	}
 
 	const nameOf = (id: string) => studentLabel(store.students.get(id) ?? ({} as Student));
+
+	// Attributs de base : édités dans le tableau sur PC, ici sur mobile (section md:hidden).
+	const levels = $derived([...store.levels.items].sort((a, b) => a.order - b.order));
+	const SEX: Sex[] = ['F', 'G'];
+	const ACAD: Academic[] = ['A', 'B', 'C', 'D'];
+	const MOTEUR: Moteur[] = ['M', 'M+'];
+	const PERTURB: Perturbateur[] = ['Z', 'Z+'];
 </script>
 
-<aside class="flex h-full w-80 flex-col border-l border-slate-200 bg-white">
+<aside
+	class="fixed inset-0 z-50 flex w-full flex-col border-slate-200 bg-white md:relative md:inset-auto md:z-auto md:h-full md:w-80 md:border-l"
+>
 	<header class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
 		<div>
 			<p class="font-semibold">{studentLabel(student)}</p>
@@ -57,6 +66,97 @@
 	</header>
 
 	<div class="flex-1 space-y-5 overflow-auto p-4">
+		<!-- Identité : sur PC ces champs sont dans le tableau, ici uniquement sur mobile. -->
+		<section class="md:hidden">
+			<h3 class="text-sm font-semibold tracking-wide text-slate-500 uppercase">Identité</h3>
+			<div class="mt-2 grid grid-cols-2 gap-2 text-sm">
+				<label class="col-span-2 flex flex-col gap-1">
+					<span class="text-xs text-slate-500">Nom</span>
+					<input
+						class="rounded border border-slate-300 px-2 py-1"
+						value={student.lastName}
+						onchange={(e) => store.students.update(student.id, { lastName: e.currentTarget.value })}
+					/>
+				</label>
+				<label class="col-span-2 flex flex-col gap-1">
+					<span class="text-xs text-slate-500">Prénom</span>
+					<input
+						class="rounded border border-slate-300 px-2 py-1"
+						value={student.firstName}
+						onchange={(e) => store.students.update(student.id, { firstName: e.currentTarget.value })}
+					/>
+				</label>
+				<label class="flex flex-col gap-1">
+					<span class="text-xs text-slate-500">Sexe</span>
+					<select
+						class="rounded border border-slate-300 px-2 py-1"
+						value={student.sex}
+						onchange={(e) => store.students.update(student.id, { sex: e.currentTarget.value as Sex })}
+					>
+						<option value=""></option>
+						{#each SEX as v (v)}<option value={v}>{v}</option>{/each}
+					</select>
+				</label>
+				<label class="flex flex-col gap-1">
+					<span class="text-xs text-slate-500">Niveau scolaire</span>
+					<select
+						class="rounded border border-slate-300 px-2 py-1"
+						value={student.academic}
+						onchange={(e) =>
+							store.students.update(student.id, { academic: e.currentTarget.value as Academic })}
+					>
+						<option value=""></option>
+						{#each ACAD as v (v)}<option value={v}>{v}</option>{/each}
+					</select>
+				</label>
+				<label class="flex flex-col gap-1">
+					<span class="text-xs text-slate-500">Moteur</span>
+					<select
+						class="rounded border border-slate-300 px-2 py-1"
+						value={student.moteur}
+						onchange={(e) =>
+							store.students.update(student.id, { moteur: e.currentTarget.value as Moteur })}
+					>
+						<option value=""></option>
+						{#each MOTEUR as v (v)}<option value={v}>{v}</option>{/each}
+					</select>
+				</label>
+				<label class="flex flex-col gap-1">
+					<span class="text-xs text-slate-500">Perturbateur</span>
+					<select
+						class="rounded border border-slate-300 px-2 py-1"
+						value={student.perturbateur}
+						onchange={(e) =>
+							store.students.update(student.id, {
+								perturbateur: e.currentTarget.value as Perturbateur
+							})}
+					>
+						<option value=""></option>
+						{#each PERTURB as v (v)}<option value={v}>{v}</option>{/each}
+					</select>
+				</label>
+				<label class="flex flex-col gap-1">
+					<span class="text-xs text-slate-500">Classe d'origine</span>
+					<input
+						class="rounded border border-slate-300 px-2 py-1"
+						value={student.originClass}
+						onchange={(e) =>
+							store.students.update(student.id, { originClass: e.currentTarget.value })}
+					/>
+				</label>
+				<label class="flex flex-col gap-1">
+					<span class="text-xs text-slate-500">Niveau</span>
+					<select
+						class="rounded border border-slate-300 px-2 py-1"
+						value={student.levelId}
+						onchange={(e) => store.students.update(student.id, { levelId: e.currentTarget.value })}
+					>
+						{#each levels as l (l.id)}<option value={l.id}>{l.name}</option>{/each}
+					</select>
+				</label>
+			</div>
+		</section>
+
 		<section>
 			<h3 class="text-sm font-semibold tracking-wide text-slate-500 uppercase">Options</h3>
 			{#if groups.length === 0}
