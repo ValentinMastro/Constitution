@@ -76,7 +76,6 @@ export function extraOptionColumnsForLevel(
 export function headersForLevel(store: ProjectStore, levelId: string): string[] {
 	return [
 		...FIXED_BEFORE,
-		...optionColumnsForLevel(store, levelId).map((c) => c.header),
 		...FIXED_AFTER,
 		...extraOptionColumnsForLevel(store, levelId).map((c) => c.header)
 	];

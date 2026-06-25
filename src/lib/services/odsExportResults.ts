@@ -1,36 +1,20 @@
 import * as XLSX from 'xlsx';
 import type { ProjectStore } from '../store/project.svelte';
 import type { Student } from '../types';
-import { optionsOf } from '../domain/options';
 import { downloadBlob, safeFileName } from './download';
 import {
 	extraOptionColumnsForLevel,
 	headersForLevel,
 	levelSheetNames,
-	optionColumnsForLevel,
-	type ExtraOptionColumn,
-	type OptionColumn
+	type ExtraOptionColumn
 } from './odsSchema';
 
-function studentRow(
-	store: ProjectStore,
-	s: Student,
-	optionCols: OptionColumn[],
-	extraCols: ExtraOptionColumn[]
-): string[] {
+function studentRow(store: ProjectStore, s: Student, extraCols: ExtraOptionColumn[]): string[] {
 	const before = [s.lastName, s.firstName, s.sex, s.academic, s.moteur, s.perturbateur, s.originClass];
-
-	const opts = optionCols.map((col) => {
-		if (col.kind === 'choix') {
-			const chosen = optionsOf(store, col.groupId).find((o) => s.optionIds.includes(o.id));
-			return chosen?.name ?? '';
-		}
-		return col.optionId && s.optionIds.includes(col.optionId) ? 'X' : '';
-	});
 
 	const future = s.assignedClassId ? (store.classes.get(s.assignedClassId)?.name ?? '') : '';
 	const extra = extraCols.map((col) => (s.optionIds.includes(col.optionId) ? 'X' : ''));
-	return [...before, ...opts, future, ...extra];
+	return [...before, future, ...extra];
 }
 
 /**
@@ -42,13 +26,12 @@ export function buildResultsWorkbook(store: ProjectStore): XLSX.WorkBook {
 
 	for (const { levelId, sheetName } of levelSheetNames(store)) {
 		const headers = headersForLevel(store, levelId);
-		const optionCols = optionColumnsForLevel(store, levelId);
 		const extraCols = extraOptionColumnsForLevel(store, levelId);
 		const students = store.students.items
 			.filter((s) => s.levelId === levelId)
 			.sort((a, b) => `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`, 'fr'));
 
-		const aoa = [headers, ...students.map((s) => studentRow(store, s, optionCols, extraCols))];
+		const aoa = [headers, ...students.map((s) => studentRow(store, s, extraCols))];
 		const ws = XLSX.utils.aoa_to_sheet(aoa);
 		ws['!cols'] = headers.map((h) => ({ wch: Math.max(12, h.length + 2) }));
 		XLSX.utils.book_append_sheet(wb, ws, sheetName);
