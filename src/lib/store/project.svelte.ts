@@ -3,6 +3,7 @@ import { IndexeddbPersistence } from 'y-indexeddb';
 import { YCollection } from './reactive.svelte';
 import { NullSyncProvider, type SyncProvider } from '../sync/SyncProvider';
 import { sync } from '../sync/webrtc.svelte';
+import { migrateOptionGroups } from '../domain/options';
 import type {
 	ClassOption,
 	ClassRoom,
@@ -56,6 +57,7 @@ export class ProjectStore {
 
 		this.persistence = new IndexeddbPersistence(`cc-project-${id}`, this.doc);
 		this.persistence.once('synced', () => {
+			migrateOptionGroups(this);
 			this.loaded = true;
 		});
 	}

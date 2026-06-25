@@ -30,8 +30,8 @@ export interface OptionGroup {
 	id: Id;
 	name: string;
 	kind: OptionKind;
-	/** null = applicable à tous les niveaux ; sinon restreint à ce niveau. */
-	levelId: Id | null;
+	/** Niveaux où le groupe s'applique ; `[]` = aucun niveau. */
+	levelIds: Id[];
 	order: number;
 }
 

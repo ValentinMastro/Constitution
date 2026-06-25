@@ -35,7 +35,9 @@ export function removeLevel(store: ProjectStore, levelId: string): void {
 		store.classOptions.removeWhere((co) => classIds.has(co.classId));
 		store.classes.removeWhere((c) => c.levelId === levelId);
 		store.students.removeWhere((s) => s.levelId === levelId);
-		store.optionGroups.removeWhere((g) => g.levelId === levelId);
+		for (const g of store.optionGroups.items)
+			if (g.levelIds.includes(levelId))
+				store.optionGroups.update(g.id, { levelIds: g.levelIds.filter((id) => id !== levelId) });
 		store.levels.remove(levelId);
 	});
 }

@@ -10,13 +10,34 @@
 
 	let newGroup = $state('');
 	let newKind = $state<OptionKind>('choix');
-	let newLevel = $state<string>(''); // '' = tous les niveaux
+	// Nouveau groupe : pré-coché sur tous les niveaux par défaut.
+	let newLevelIds = $state<string[]>([]);
+	$effect(() => {
+		newLevelIds = levels.map((l) => l.id);
+	});
 
 	let optionDraft = $state<Record<string, string>>({});
 
 	function createGroup() {
-		addGroup(store, newGroup, newKind, newLevel || null);
+		addGroup(store, newGroup, newKind, newLevelIds);
 		newGroup = '';
+		newLevelIds = levels.map((l) => l.id);
+	}
+
+	function toggleNewLevel(levelId: string, on: boolean) {
+		newLevelIds = on
+			? [...newLevelIds, levelId]
+			: newLevelIds.filter((id) => id !== levelId);
+	}
+
+	function toggleGroupLevel(g: { id: string; levelIds: string[] }, levelId: string, on: boolean) {
+		const levelIds = on ? [...g.levelIds, levelId] : g.levelIds.filter((id) => id !== levelId);
+		store.optionGroups.update(g.id, { levelIds });
+	}
+
+	function levelsLabel(levelIds: string[]): string {
+		const names = levels.filter((l) => levelIds.includes(l.id)).map((l) => l.name);
+		return names.length ? names.join(', ') : 'Aucun niveau';
 	}
 
 	function createOption(groupId: string) {
@@ -36,7 +57,6 @@
 
 	<div class="mt-4 space-y-3">
 		{#each groups as g (g.id)}
-			{@const levelName = g.levelId ? store.levels.get(g.levelId)?.name : 'Tous les niveaux'}
 			<div class="rounded-lg border border-slate-200 p-3">
 				<div class="flex flex-wrap items-center gap-2">
 					<input
@@ -53,18 +73,27 @@
 						<option value="choix">Choix obligatoire</option>
 						<option value="pure">Option facultative</option>
 					</select>
-					<select
-						class="rounded-lg border border-slate-300 px-2 py-1 text-sm"
-						value={g.levelId ?? ''}
-						onchange={(e) =>
-							store.optionGroups.update(g.id, { levelId: e.currentTarget.value || null })}
-					>
-						<option value="">Tous les niveaux</option>
-						{#each levels as l (l.id)}
-							<option value={l.id}>{l.name}</option>
-						{/each}
-					</select>
-					<span class="text-xs text-slate-400">{levelName}</span>
+					<details class="relative text-sm">
+						<summary
+							class="cursor-pointer list-none rounded-lg border border-slate-300 px-2 py-1 text-slate-600 hover:bg-slate-50"
+						>
+							{levelsLabel(g.levelIds)} ▾
+						</summary>
+						<div
+							class="absolute z-10 mt-1 max-h-56 w-44 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg"
+						>
+							{#each levels as l (l.id)}
+								<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-slate-50">
+									<input
+										type="checkbox"
+										checked={g.levelIds.includes(l.id)}
+										onchange={(e) => toggleGroupLevel(g, l.id, e.currentTarget.checked)}
+									/>
+									{l.name}
+								</label>
+							{/each}
+						</div>
+					</details>
 					<button
 						class="ml-auto rounded px-2 py-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
 						title="Supprimer le groupe"
@@ -127,12 +156,27 @@
 			<option value="choix">Choix obligatoire</option>
 			<option value="pure">Option facultative</option>
 		</select>
-		<select class="rounded-lg border border-slate-300 px-2 py-2 text-sm" bind:value={newLevel}>
-			<option value="">Tous les niveaux</option>
-			{#each levels as l (l.id)}
-				<option value={l.id}>{l.name}</option>
-			{/each}
-		</select>
+		<details class="relative text-sm">
+			<summary
+				class="cursor-pointer list-none rounded-lg border border-slate-300 px-2 py-2 text-slate-600 hover:bg-slate-50"
+			>
+				{levelsLabel(newLevelIds)} ▾
+			</summary>
+			<div
+				class="absolute z-10 mt-1 max-h-56 w-44 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg"
+			>
+				{#each levels as l (l.id)}
+					<label class="flex cursor-pointer items-center gap-2 rounded px-2 py-1 hover:bg-slate-50">
+						<input
+							type="checkbox"
+							checked={newLevelIds.includes(l.id)}
+							onchange={(e) => toggleNewLevel(l.id, e.currentTarget.checked)}
+						/>
+						{l.name}
+					</label>
+				{/each}
+			</div>
+		</details>
 		<button
 			class="rounded-lg bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700"
 			type="submit">+ Groupe</button

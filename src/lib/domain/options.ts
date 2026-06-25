@@ -9,17 +9,37 @@ export function addGroup(
 	store: ProjectStore,
 	name: string,
 	kind: OptionKind,
-	levelId: string | null
+	levelIds: string[]
 ): OptionGroup {
 	const group: OptionGroup = {
 		id: crypto.randomUUID(),
 		name: name.trim() || 'Nouveau groupe',
 		kind,
-		levelId,
+		levelIds,
 		order: nextOrder(store.optionGroups.items)
 	};
 	store.optionGroups.add(group);
 	return group;
+}
+
+/**
+ * Migration idempotente : convertit les groupes de l'ancien modèle (`levelId`)
+ * vers `levelIds`. `levelId == null` (ancien « tous les niveaux ») → tous les
+ * niveaux courants ; sinon le niveau seul.
+ */
+export function migrateOptionGroups(store: ProjectStore): void {
+	const legacy = store.optionGroups.items.filter(
+		(g) => (g as { levelIds?: string[] }).levelIds === undefined
+	);
+	if (legacy.length === 0) return;
+	const allLevelIds = store.levels.items.map((l) => l.id);
+	store.transact(() => {
+		for (const g of legacy) {
+			const levelId = (g as { levelId?: string | null }).levelId ?? null;
+			const levelIds = levelId === null ? allLevelIds : [levelId];
+			store.optionGroups.update(g.id, { levelIds });
+		}
+	});
 }
 
 /** Supprime un groupe, ses options, leurs offres de classe et les retire des élèves. */
@@ -81,7 +101,7 @@ export function toggleClassOption(store: ProjectStore, classId: string, optionId
 /** Groupes applicables à un niveau (globaux ou restreints à ce niveau). */
 export function groupsForLevel(store: ProjectStore, levelId: string): OptionGroup[] {
 	return store.optionGroups.items
-		.filter((g) => g.levelId === null || g.levelId === levelId)
+		.filter((g) => g.levelIds.includes(levelId))
 		.sort((a, b) => a.order - b.order);
 }
 
