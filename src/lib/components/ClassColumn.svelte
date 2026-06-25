@@ -103,8 +103,15 @@
 
 <div class="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-slate-50 {autoHeight ? '' : 'h-full'}">
 	<header class="border-b border-slate-200 px-2 py-1.5">
-		<div class="flex items-center justify-between">
-			<span class="truncate font-semibold">{name}</span>
+		<div class="flex items-center gap-1">
+			<span class="min-w-0 flex-1 truncate font-semibold">{name}</span>
+			{#if options.length}
+				<div class="flex flex-wrap justify-end gap-0.5">
+					{#each options as option (option.id)}
+						<span class="rounded px-1 text-xs leading-tight {optionColor(option.name)}" title="Option offerte">{option.name}</span>
+					{/each}
+				</div>
+			{/if}
 		</div>
 		{#if filterable}
 			<div class="mt-1 flex flex-wrap items-center gap-0.5">
@@ -135,13 +142,6 @@
 			<div class="mt-1 text-xs text-slate-400">{displayItems.length} / {items.length} élève(s)</div>
 		{:else}
 			<div class="mt-1 text-xs text-slate-400">{stats.total} élève(s)</div>
-		{/if}
-		{#if options.length}
-			<div class="mt-1 flex flex-wrap gap-0.5">
-				{#each options as option (option.id)}
-					<span class="rounded px-1 text-xs leading-tight {optionColor(option.name)}" title="Option offerte">{option.name}</span>
-				{/each}
-			</div>
 		{/if}
 	</header>
 
