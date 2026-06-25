@@ -83,7 +83,15 @@
 
 	<div class="flex items-center gap-1">
 		{#if problems.length}<span class="text-red-500" aria-label="problème">⚠</span>{/if}
-		<span class="min-w-0 flex-1 truncate font-medium text-slate-800">{studentLabel(student)}</span>
+		<span class="flex min-w-0 flex-1 items-center gap-1 font-medium text-slate-800">
+			{#if student.lastName || student.firstName}
+				<!-- Seul le NOM se tronque (…) ; le prénom reste toujours visible. -->
+				<span class="min-w-0 truncate">{student.lastName}</span>
+				{#if student.firstName}<span class="shrink-0">{student.firstName}</span>{/if}
+			{:else}
+				(sans nom)
+			{/if}
+		</span>
 		{#if linked}<span class="text-indigo-500" aria-label="liens">🔗</span>{/if}
 		<!-- Sans option : tout tient sur la 1ère ligne (inchangé). -->
 		{#if !options.length}{@render badges()}{/if}
