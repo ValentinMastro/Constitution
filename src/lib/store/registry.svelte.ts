@@ -138,7 +138,7 @@ export const registry = {
 		if (!data.id || !data.shareKey) throw new Error('Code de partage invalide');
 		let meta = this.get(data.id);
 		if (!meta) {
-			meta = { ...data, createdAt: Date.now() };
+			meta = { ...data, createdAt: Date.now(), ephemeral: true };
 			metas = [...metas, meta];
 			persist();
 		}

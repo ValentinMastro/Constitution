@@ -92,4 +92,6 @@ export interface ProjectMeta {
 	/** Clé de partage : sert de mot de passe de salon pour la sync P2P (Phase 7). */
 	shareKey: string;
 	createdAt: number;
+	/** Projet rejoint via partage (QR/code) : copie éphémère effacée à la déconnexion. */
+	ephemeral?: boolean;
 }

@@ -19,6 +19,18 @@
 		if (browser) localStorage.setItem('navCollapsed', navCollapsed ? '1' : '0');
 	}
 
+	// Réaction d'un poste invité à une révocation distante : le PC source a coupé le
+	// partage, on ferme le projet et on efface toutes les données locales (sécurité).
+	if (browser) {
+		sync.onRevoked((id) => {
+			if (!registry.get(id)?.ephemeral) return; // seul un invité se purge
+			sync.rememberEnabled(id, false);
+			sync.disconnect();
+			registry.remove(id); // ferme le projet + supprime IndexedDB + meta
+			goto('/');
+		});
+	}
+
 	// Réouvre automatiquement le dernier projet après un rechargement (SPA),
 	// et rétablit la collaboration P2P si elle était active pour ce projet.
 	if (browser && !project.current) {

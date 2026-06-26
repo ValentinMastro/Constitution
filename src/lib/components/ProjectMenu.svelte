@@ -47,9 +47,16 @@
 	}
 
 	function disconnect() {
-		if (sync.active) {
-			sync.rememberEnabled(store.id, false);
+		sync.rememberEnabled(store.id, false);
+		if (meta?.ephemeral) {
+			// Poste invité : on coupe et on efface nos propres données locales.
 			sync.disconnect();
+			registry.remove(store.id);
+			goto('/');
+		} else {
+			// PC source : on commande d'abord aux téléphones invités de se purger
+			// (fermeture + suppression des données), puis on se déconnecte.
+			sync.revokePeers();
 		}
 	}
 
@@ -64,7 +71,14 @@
 	}
 
 	function closeProject() {
-		registry.close();
+		// Un poste invité ne conserve rien en local : fermer = couper le P2P et purger.
+		if (meta?.ephemeral) {
+			sync.rememberEnabled(store.id, false);
+			sync.disconnect();
+			registry.remove(store.id);
+		} else {
+			registry.close();
+		}
 		goto('/');
 	}
 </script>

@@ -59,7 +59,9 @@ async function ensureWebrtcGlobals() {
  * transporter, chiffré, entre les pairs d'un même salon (id de projet + clé).
  */
 class SyncController {
-	#provider: WebrtcProvider | null = null;
+	#provider = $state<WebrtcProvider | null>(null);
+	#storeId: string | null = null;
+	#onRevoked: ((projectId: string) => void) | null = null;
 
 	status = $state<SyncStatus>('off');
 	peers = $state(0);
@@ -75,6 +77,15 @@ class SyncController {
 	/** L'utilisateur a-t-il activé la collaboration pour ce projet ? (persistant) */
 	isEnabled(id: string): boolean {
 		return browser && localStorage.getItem(`cc-sync-${id}`) === '1';
+	}
+
+	/**
+	 * Enregistre la réaction d'un poste **invité** à une révocation distante : le PC
+	 * source diffuse `control.revoke` via awareness avant de se déconnecter, et l'invité
+	 * doit alors fermer le projet et purger ses données locales.
+	 */
+	onRevoked(cb: (projectId: string) => void) {
+		this.#onRevoked = cb;
 	}
 
 	rememberEnabled(id: string, on: boolean) {
@@ -108,8 +119,12 @@ class SyncController {
 				this.status = connected ? 'connected' : 'connecting';
 			});
 			provider.on('peers', () => this.#refresh(provider));
-			provider.awareness.on('change', () => this.#refresh(provider));
+			provider.awareness.on('change', () => {
+				this.#refresh(provider);
+				this.#checkRevoke(provider);
+			});
 
+			this.#storeId = store.id;
 			this.#provider = provider;
 			this.rememberEnabled(store.id, true);
 			if (import.meta.env.DEV) (globalThis as Record<string, unknown>).__ccProvider = provider;
@@ -130,9 +145,39 @@ class SyncController {
 		if (this.status !== 'connected' && provider.connected) this.status = 'connected';
 	}
 
+	/**
+	 * Détecte qu'un pair distant a publié `control.revoke` (le PC source nous demande de
+	 * fermer et purger). Ignore notre propre état awareness.
+	 */
+	#checkRevoke(provider: WebrtcProvider) {
+		const self = provider.awareness.clientID;
+		for (const [id, state] of provider.awareness.getStates()) {
+			if (id === self) continue;
+			if ((state as { control?: { revoke?: boolean } })?.control?.revoke) {
+				if (this.#storeId) this.#onRevoked?.(this.#storeId);
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Côté PC source : demande aux pairs invités de se purger (diffusion awareness), puis
+	 * se déconnecte après un court délai laissant la commande se propager en P2P.
+	 */
+	revokePeers() {
+		const provider = this.#provider;
+		if (!provider) {
+			this.disconnect();
+			return;
+		}
+		provider.awareness.setLocalStateField('control', { revoke: true });
+		setTimeout(() => this.disconnect(), 600);
+	}
+
 	disconnect() {
 		this.#provider?.destroy();
 		this.#provider = null;
+		this.#storeId = null;
 		this.status = 'off';
 		this.peers = 0;
 	}
