@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { MediaQuery } from 'svelte/reactivity';
 	import ClassColumn from '$lib/components/ClassColumn.svelte';
 	import StudentClassMenu from '$lib/components/StudentClassMenu.svelte';
 	import { classesOfLevel, isOffered, optionsForLevel } from '$lib/domain/options';
@@ -9,6 +10,10 @@
 	import type { Student } from '$lib/types';
 
 	const UNPLACED = '__unplaced__';
+	// Vue desktop/mobile pilotée par une vraie media query : on ne monte qu'UNE seule
+	// des deux vues. Les masquer en CSS (`md:hidden`) laisserait les deux dndzones
+	// montées avec les mêmes élèves (mêmes id) → svelte-dnd-action casse le drag&drop.
+	const desktop = new MediaQuery('min-width: 768px');
 	const store = $derived(project.current!);
 	const levels = $derived([...store.levels.items].sort((a, b) => a.order - b.order));
 
@@ -146,33 +151,18 @@
 	</header>
 
 	{#if levelId}
-		<!-- Vue PC : toutes les colonnes côte à côte. -->
-		<div class="hidden min-h-0 flex-1 gap-2 md:flex">
-			<div class="flex h-full w-44 shrink-0">
-				<ClassColumn
-					{store}
-					zoneId={UNPLACED}
-					name="Non affectés"
-					capacity={null}
-					items={board[UNPLACED] ?? []}
-					filterable
-					filterOptions={levelOptions}
-					{highlightId}
-					{withSet}
-					{apartSet}
-					{onsort}
-					onhover={(id) => (hoveredId = id)}
-					{onpin}
-				/>
-			</div>
-			<div class="grid min-h-0 flex-1 gap-2" style="grid-template-columns: repeat({Math.max(classes.length, 1)}, minmax(0, 1fr));">
-				{#each classes as c (c.id)}
+		{#if desktop.current}
+			<!-- Vue PC : toutes les colonnes côte à côte. -->
+			<div class="flex min-h-0 flex-1 gap-2">
+				<div class="flex h-full w-44 shrink-0">
 					<ClassColumn
 						{store}
-						zoneId={c.id}
-						name={c.name}
-						capacity={c.capacity}
-						items={board[c.id] ?? []}
+						zoneId={UNPLACED}
+						name="Non affectés"
+						capacity={null}
+						items={board[UNPLACED] ?? []}
+						filterable
+						filterOptions={levelOptions}
 						{highlightId}
 						{withSet}
 						{apartSet}
@@ -180,61 +170,79 @@
 						onhover={(id) => (hoveredId = id)}
 						{onpin}
 					/>
-				{/each}
-			</div>
-		</div>
-
-		<!-- Vue mobile : une seule zone à la fois, swipe pour naviguer (en boucle).
-		     La colonne grandit avec son contenu (scroll de page), pas de scroll interne. -->
-		<div class="flex flex-col md:hidden">
-			<div class="mb-2 flex items-center justify-between gap-2">
-				<button
-					class="rounded-lg border border-slate-200 px-3 py-1 text-lg leading-none text-slate-600 hover:bg-slate-50"
-					aria-label="Zone précédente"
-					onclick={() => go(-1)}>‹</button
-				>
-				<div class="flex min-w-0 flex-col items-center">
-					<span class="truncate text-sm font-semibold">{current.name}</span>
-					<div class="mt-0.5 flex gap-1">
-						{#each zones as z, i (z.id)}
-							<span
-								class="h-1.5 w-1.5 rounded-full {i === mobileIndex ? 'bg-indigo-600' : 'bg-slate-300'}"
-							></span>
-						{/each}
-					</div>
 				</div>
-				<button
-					class="rounded-lg border border-slate-200 px-3 py-1 text-lg leading-none text-slate-600 hover:bg-slate-50"
-					aria-label="Zone suivante"
-					onclick={() => go(1)}>›</button
+				<div class="grid min-h-0 flex-1 gap-2" style="grid-template-columns: repeat({Math.max(classes.length, 1)}, minmax(0, 1fr));">
+					{#each classes as c (c.id)}
+						<ClassColumn
+							{store}
+							zoneId={c.id}
+							name={c.name}
+							capacity={c.capacity}
+							items={board[c.id] ?? []}
+							{highlightId}
+							{withSet}
+							{apartSet}
+							{onsort}
+							onhover={(id) => (hoveredId = id)}
+							{onpin}
+						/>
+					{/each}
+				</div>
+			</div>
+	
+		{:else}
+			<!-- Vue mobile : une seule zone à la fois, swipe pour naviguer (en boucle).
+			     La colonne grandit avec son contenu (scroll de page), pas de scroll interne. -->
+			<div class="flex flex-col">
+				<div class="mb-2 flex items-center justify-between gap-2">
+					<button
+						class="rounded-lg border border-slate-200 px-3 py-1 text-lg leading-none text-slate-600 hover:bg-slate-50"
+						aria-label="Zone précédente"
+						onclick={() => go(-1)}>‹</button
+					>
+					<div class="flex min-w-0 flex-col items-center">
+						<span class="truncate text-sm font-semibold">{current.name}</span>
+						<div class="mt-0.5 flex gap-1">
+							{#each zones as z, i (z.id)}
+								<span
+									class="h-1.5 w-1.5 rounded-full {i === mobileIndex ? 'bg-indigo-600' : 'bg-slate-300'}"
+								></span>
+							{/each}
+						</div>
+					</div>
+					<button
+						class="rounded-lg border border-slate-200 px-3 py-1 text-lg leading-none text-slate-600 hover:bg-slate-50"
+						aria-label="Zone suivante"
+						onclick={() => go(1)}>›</button
+					>
+				</div>
+				<div
+					role="group"
+					aria-label="Colonne {current.name} — glissez pour changer de zone"
+					ontouchstart={onTouchStart}
+					ontouchend={onTouchEnd}
 				>
+					<ClassColumn
+						{store}
+						zoneId={current.id}
+						name={current.name}
+						capacity={current.capacity}
+						items={board[current.id] ?? []}
+						filterable={current.unplaced}
+						filterOptions={current.unplaced ? levelOptions : []}
+						{highlightId}
+						{withSet}
+						{apartSet}
+						{onsort}
+						onhover={(id) => (hoveredId = id)}
+						{onpin}
+						onselect={(s) => (menuStudent = s)}
+						dndDisabled
+						autoHeight
+					/>
+				</div>
 			</div>
-			<div
-				role="group"
-				aria-label="Colonne {current.name} — glissez pour changer de zone"
-				ontouchstart={onTouchStart}
-				ontouchend={onTouchEnd}
-			>
-				<ClassColumn
-					{store}
-					zoneId={current.id}
-					name={current.name}
-					capacity={current.capacity}
-					items={board[current.id] ?? []}
-					filterable={current.unplaced}
-					filterOptions={current.unplaced ? levelOptions : []}
-					{highlightId}
-					{withSet}
-					{apartSet}
-					{onsort}
-					onhover={(id) => (hoveredId = id)}
-					{onpin}
-					onselect={(s) => (menuStudent = s)}
-					dndDisabled
-					autoHeight
-				/>
-			</div>
-		</div>
+		{/if}
 	{:else}
 		<p class="text-slate-400">Définissez des niveaux et des classes, puis importez des élèves.</p>
 	{/if}
