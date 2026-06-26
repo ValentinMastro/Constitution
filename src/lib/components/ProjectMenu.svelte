@@ -40,12 +40,16 @@
 		if (meta) exportProjectFile(store, meta, page.url.pathname);
 	}
 
-	function toggleConnect() {
+	function connect() {
+		if (!sync.active && meta) {
+			sync.connect(store, meta.shareKey);
+		}
+	}
+
+	function disconnect() {
 		if (sync.active) {
 			sync.rememberEnabled(store.id, false);
 			sync.disconnect();
-		} else if (meta) {
-			sync.connect(store, meta.shareKey);
 		}
 	}
 
@@ -143,14 +147,22 @@
 							<span class="text-slate-400">Hors ligne</span>
 						{/if}
 					</span>
-					<button
-						class="rounded-lg px-3 py-1 text-sm font-medium text-white {sync.active
-							? 'bg-rose-600 hover:bg-rose-700'
-							: 'bg-indigo-600 hover:bg-indigo-700'}"
-						onclick={toggleConnect}
-					>
-						{sync.active ? 'Déconnecter' : 'Connecter'}
-					</button>
+					<div class="flex gap-2">
+						<button
+							class="rounded-lg bg-indigo-600 px-3 py-1 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+							disabled={sync.active}
+							onclick={connect}
+						>
+							Connecter
+						</button>
+						<button
+							class="rounded-lg bg-rose-600 px-3 py-1 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+							disabled={!sync.active}
+							onclick={disconnect}
+						>
+							Déconnecter
+						</button>
+					</div>
 				</div>
 
 				{#if sync.error}
