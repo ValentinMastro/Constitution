@@ -1,14 +1,20 @@
 <script lang="ts">
 	import type { ClassStats } from '$lib/domain/stats';
 
-	let { stats, capacity }: { stats: ClassStats; capacity: number } = $props();
+	// `selected` : nombre d'élèves correspondant au filtre d'option actif
+	// (affiché en tête, ex. 12/25/30). `null` quand aucun filtre n'est actif.
+	let {
+		stats,
+		capacity,
+		selected = null
+	}: { stats: ClassStats; capacity: number; selected?: number | null } = $props();
 	const over = $derived(stats.total > capacity);
 </script>
 
 <div class="space-y-0.5 text-xs">
 	<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 		<span class="font-semibold {over ? 'text-red-600' : 'text-slate-600'}">
-			{stats.total}/{capacity}
+			{#if selected !== null}{selected}/{/if}{stats.total}/{capacity}
 		</span>
 		<span class="flex gap-0.5 text-slate-600">
 			<span title="Niveau A">A{stats.academic.A}</span>

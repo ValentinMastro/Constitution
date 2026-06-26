@@ -61,6 +61,23 @@
 		pinnedId = pinnedId === id ? null : id;
 	}
 
+	// Filtre par option d'une colonne classe : simple clic → seulement cette
+	// classe, double clic → toutes les classes (zoneId === ALL_ZONES).
+	const ALL_ZONES = '__all__';
+	let optionFilter = $state<{ zoneId: string; optionId: string } | null>(null);
+	function selectedOptionFor(zoneId: string): string | null {
+		if (!optionFilter) return null;
+		if (optionFilter.zoneId === ALL_ZONES || optionFilter.zoneId === zoneId)
+			return optionFilter.optionId;
+		return null;
+	}
+	function toggleOption(zoneId: string, optionId: string) {
+		optionFilter =
+			optionFilter?.zoneId === zoneId && optionFilter.optionId === optionId
+				? null
+				: { zoneId, optionId };
+	}
+
 	const placed = $derived(
 		store.students.items.filter((s) => s.levelId === levelId && s.assignedClassId).length
 	);
@@ -77,6 +94,7 @@
 	$effect(() => {
 		void levelId;
 		mobileIndex = 0;
+		optionFilter = null;
 	});
 	const current = $derived(zones[mobileIndex] ?? zones[0]);
 	function go(d: number) {
@@ -185,6 +203,9 @@
 							{onsort}
 							onhover={(id) => (hoveredId = id)}
 							{onpin}
+							selectedOptionId={selectedOptionFor(c.id)}
+							onOptionClick={(optionId) => toggleOption(c.id, optionId)}
+							onOptionDblClick={(optionId) => toggleOption(ALL_ZONES, optionId)}
 						/>
 					{/each}
 				</div>
@@ -237,6 +258,9 @@
 						onhover={(id) => (hoveredId = id)}
 						{onpin}
 						onselect={(s) => (menuStudent = s)}
+						selectedOptionId={current.unplaced ? null : selectedOptionFor(current.id)}
+						onOptionClick={(optionId) => toggleOption(current.id, optionId)}
+						onOptionDblClick={(optionId) => toggleOption(ALL_ZONES, optionId)}
 						dndDisabled
 						autoHeight
 					/>

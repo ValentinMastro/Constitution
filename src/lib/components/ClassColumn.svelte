@@ -20,6 +20,9 @@
         onhover,
         onpin,
         onselect,
+        onOptionClick,
+        onOptionDblClick,
+        selectedOptionId = null,
         dndDisabled = false,
         autoHeight = false,
         filterable = false,
@@ -37,6 +40,11 @@
         onhover: (id: string | null) => void;
         onpin: (id: string) => void;
         onselect?: (student: Student) => void;
+        // Filtre par option de la colonne classe : simple clic (cette classe) /
+        // double clic (toutes les classes). L'état est piloté par le parent.
+        onOptionClick?: (optionId: string) => void;
+        onOptionDblClick?: (optionId: string) => void;
+        selectedOptionId?: string | null;
         // Mobile : désactive le drag&drop et laisse la colonne grandir avec son contenu.
         dndDisabled?: boolean;
         autoHeight?: boolean;
@@ -143,10 +151,38 @@
         return true;
     }
 
-    const filtering = $derived(filterable && active.size > 0);
-    const displayItems = $derived(filtering ? items.filter(matches) : items);
+    function matchesAll(s: Student): boolean {
+        if (filterable && active.size > 0 && !matches(s)) return false;
+        if (selectedOptionId && !s.optionIds.includes(selectedOptionId))
+            return false;
+        return true;
+    }
+
+    const filtering = $derived(
+        (filterable && active.size > 0) || !!selectedOptionId,
+    );
+    const displayItems = $derived(filtering ? items.filter(matchesAll) : items);
     // Éléments masqués par le filtre, à réinjecter pour ne pas les perdre au drag&drop.
-    const hidden = $derived(filtering ? items.filter((s) => !matches(s)) : []);
+    const hidden = $derived(filtering ? items.filter((s) => !matchesAll(s)) : []);
+
+    // Distinction simple/double clic sur un badge d'option (clic simple = cette
+    // classe, double = toutes). On temporise le simple clic le temps de détecter
+    // un éventuel double clic.
+    let clickTimer: ReturnType<typeof setTimeout> | null = null;
+    function onBadgeClick(optionId: string) {
+        if (clickTimer) return;
+        clickTimer = setTimeout(() => {
+            clickTimer = null;
+            onOptionClick?.(optionId);
+        }, 220);
+    }
+    function onBadgeDblClick(optionId: string) {
+        if (clickTimer) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+        }
+        onOptionDblClick?.(optionId);
+    }
 
     function consider(e: CustomEvent<DndEvent<Student>>) {
         onsort(zoneId, [...e.detail.items, ...hidden], false);
@@ -167,11 +203,17 @@
             {#if options.length}
                 <div class="flex flex-wrap justify-end gap-0.5">
                     {#each options as option (option.id)}
-                        <span
+                        <button
+                            type="button"
                             class="rounded border-[0.25px] px-1 text-xs leading-tight {optionColor(
                                 option.name,
-                            )}"
-                            title="Option offerte">{option.name}</span
+                            )} {selectedOptionId === option.id
+                                ? 'ring-1 ring-slate-900/40'
+                                : ''}"
+                            title="Clic : n'afficher que les élèves de cette option dans la classe · Double-clic : sur toutes les classes"
+                            onclick={() => onBadgeClick(option.id)}
+                            ondblclick={() => onBadgeDblClick(option.id)}
+                            >{option.name}</button
                         >
                     {/each}
                 </div>
@@ -205,7 +247,13 @@
             </div>
         {/if}
         {#if capacity !== null}
-            <div class="mt-0.5"><ClassStats {stats} {capacity} /></div>
+            <div class="mt-0.5">
+                <ClassStats
+                    {stats}
+                    {capacity}
+                    selected={selectedOptionId ? displayItems.length : null}
+                />
+            </div>
         {:else if filtering}
             <div class="mt-0.5 text-xs text-slate-400">
                 {displayItems.length} / {items.length} élève(s)
