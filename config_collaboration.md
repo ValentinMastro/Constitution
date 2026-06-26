@@ -24,6 +24,30 @@ Point clé de sécurité : **les données élèves ne passent jamais par le serv
 signalisation ne voit que des métadonnées de connexion ; le contenu circule directement entre les
 navigateurs, chiffré par le mot de passe de salon (la `shareKey` du projet).
 
+### Postes « invités » éphémères et révocation à distance
+
+Un appareil qui **rejoint** un projet (en scannant le QR Code ou via un code de partage, route
+`?join=…` / `joinShared`) est marqué **invité éphémère** (`ephemeral: true` dans sa `ProjectMeta`
+locale). Cette distinction de rôle est **purement locale** : elle n'est pas encodée dans le code de
+partage et ne transite donc pas sur le réseau. Le PC qui a **créé** le projet, lui, n'est jamais
+éphémère et garde toujours ses données.
+
+Deux comportements de sécurité en découlent (logique applicative, **aucune** config VPS) :
+
+- **Déconnexion/fermeture côté invité** : sur un poste invité, « Déconnecter » ou « Fermer le
+  projet » coupe le P2P **et efface toutes les données locales** (base IndexedDB + métadonnées).
+  Rien ne subsiste sur le téléphone.
+- **Révocation à distance depuis le PC source** : quand on clique « Déconnecter » sur le PC, celui-ci
+  diffuse une commande `control.revoke` via le canal **awareness** de y-webrtc (le même transport
+  P2P chiffré, aucune donnée élève), puis se déconnecte. Les invités connectés la reçoivent,
+  ferment le projet et **purgent leurs données locales** automatiquement. Le PC, lui, conserve les
+  siennes.
+
+> ⚠️ Limite : la commande de révocation passe par le canal **temps réel** (awareness, non persisté).
+> Elle ne purge que les invités **connectés au moment du clic**. Un téléphone hors-ligne à cet
+> instant ne reçoit pas l'ordre ; ses données restent jusqu'à ce qu'il se reconnecte (et soit
+> révoqué) ou qu'on les efface manuellement depuis l'appareil. Aucune incidence sur la config VPS.
+
 ### Pourquoi `/signaling` sur la même origine
 
 Le client se connecte par défaut à `wss://<origine-de-l'app>/signaling` (cf. `defaultSignaling()`
@@ -219,6 +243,10 @@ const ICE_SERVERS = [
    la collaboration des deux côtés. Le champ « Serveur de signalisation » doit afficher
    `wss://constitution.mathro.fr/signaling` (laisser **vide** = défaut). Les données doivent
    apparaître sur le second appareil en quelques secondes.
+4. **Révocation à distance** : les deux appareils étant connectés, cliquer « Déconnecter » **sur le
+   PC**. En ~1 s, le téléphone doit revenir à l'accueil, le projet doit avoir disparu de sa liste et
+   sa base IndexedDB `cc-project-<id>` doit être supprimée (DevTools → Application). Côté PC, les
+   données **restent** présentes.
 
 ### Dépannage
 
@@ -238,3 +266,7 @@ const ICE_SERVERS = [
 - Garder le port 4444 **fermé** au public (accessible seulement via le proxy nginx local).
 - La clé de partage d'un projet vaut accès complet à ses données : la transmettre par un canal de
   confiance (le QR Code reste local au réseau ; le lien `?join=` contient cette clé).
+- Les appareils **invités** (téléphones ayant rejoint via QR/code) ne sont pas des copies
+  permanentes : leurs données locales sont effacées dès la déconnexion (locale ou révoquée par le
+  PC source). Pour un téléphone prêté/partagé, c'est la garantie qu'aucune donnée élève n'y reste
+  après la séance — à condition qu'il soit connecté au moment de la révocation (cf. §1).
