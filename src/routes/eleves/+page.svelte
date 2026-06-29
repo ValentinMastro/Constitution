@@ -55,6 +55,8 @@
 		return rows.sort((a, b) => get(a).localeCompare(get(b), 'fr') * sortDir);
 	});
 
+	const plural = (n: number) => (n > 1 ? 'élèves' : 'élève');
+
 	const selected = $derived(selectedId ? (store.students.get(selectedId) ?? null) : null);
 
 	function sortBy(key: keyof Student) {
@@ -84,7 +86,8 @@
 		<header class="mb-4">
 			<h1 class="text-2xl font-bold">Élèves &amp; liens</h1>
 			<p class="text-sm text-slate-500">
-				{store.students.size} élève(s). Cliquez une ligne pour gérer ses options et ses liens.
+				{#if filtered.length < store.students.size}{filtered.length}/{store.students.size}{:else}{store.students.size}{/if}
+				{plural(store.students.size)}. Cliquez une ligne pour gérer ses options et ses liens.
 			</p>
 		</header>
 
@@ -141,10 +144,10 @@
 							onclick={() => (selectedId = s.id)}
 						>
 							<td class="px-1 py-1">
-								<input class="w-28 rounded px-1 py-0.5 hover:bg-white focus:bg-white focus:outline focus:outline-indigo-300" value={s.lastName} onclick={(e) => e.stopPropagation()} onchange={(e) => store.students.update(s.id, { lastName: e.currentTarget.value })} />
+								<input class="w-full rounded px-1 py-0.5 hover:bg-white focus:bg-white focus:outline focus:outline-indigo-300" value={s.lastName} onclick={(e) => e.stopPropagation()} onchange={(e) => store.students.update(s.id, { lastName: e.currentTarget.value })} />
 							</td>
 							<td class="px-1 py-1">
-								<input class="w-24 rounded px-1 py-0.5 hover:bg-white focus:bg-white focus:outline focus:outline-indigo-300" value={s.firstName} onclick={(e) => e.stopPropagation()} onchange={(e) => store.students.update(s.id, { firstName: e.currentTarget.value })} />
+								<input class="w-full rounded px-1 py-0.5 hover:bg-white focus:bg-white focus:outline focus:outline-indigo-300" value={s.firstName} onclick={(e) => e.stopPropagation()} onchange={(e) => store.students.update(s.id, { firstName: e.currentTarget.value })} />
 							</td>
 							<td class="px-1 py-1">
 								<select class="rounded bg-transparent px-1 py-0.5" value={s.sex} onclick={(e) => e.stopPropagation()} onchange={(e) => store.students.update(s.id, { sex: e.currentTarget.value as Sex })}>
