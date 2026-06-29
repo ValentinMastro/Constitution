@@ -1,18 +1,37 @@
 <script lang="ts">
+	import { MediaQuery } from 'svelte/reactivity';
 	import StudentPanel from '$lib/components/StudentPanel.svelte';
 	import { project } from '$lib/store/project.svelte';
 	import type { Academic, Moteur, Perturbateur, Sex, Student } from '$lib/types';
 	import {
 		addStudent,
-		linksOf,
 		optionNames,
-		partnersOf,
 		removeStudent,
 		studentLabel
 	} from '$lib/domain/students';
 
+	// Vue desktop/mobile pilotée par une vraie media query : on ne monte qu'UNE
+	// seule des deux vues (sinon les ~600 lignes du tableau ET les ~600 cartes
+	// mobile sont créées en même temps, doublant le coût de rendu).
+	const desktop = new MediaQuery('min-width: 768px');
 	const store = $derived(project.current!);
 	const levels = $derived([...store.levels.items].sort((a, b) => a.order - b.order));
+
+	// Compteurs de liens par élève, calculés une fois (au lieu de O(élèves × liens)).
+	const linkCounts = $derived.by(() => {
+		const m = new Map<string, { with: number; apart: number }>();
+		const bump = (id: string, t: 'with' | 'apart') => {
+			const e = m.get(id) ?? { with: 0, apart: 0 };
+			e[t]++;
+			m.set(id, e);
+		};
+		for (const l of store.links.items) {
+			if (l.type !== 'with' && l.type !== 'apart') continue;
+			bump(l.a, l.type);
+			bump(l.b, l.type);
+		}
+		return m;
+	});
 
 	let search = $state('');
 	let levelFilter = $state('');
@@ -92,7 +111,8 @@
 			</button>
 		</div>
 
-		<div class="hidden min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white md:block">
+		{#if desktop.current}
+		<div class="min-h-0 flex-1 overflow-auto rounded-xl border border-slate-200 bg-white">
 			<table class="w-full border-collapse text-sm">
 				<thead class="sticky top-0 bg-slate-50">
 					<tr class="border-b border-slate-200 text-left">
@@ -111,8 +131,9 @@
 				</thead>
 				<tbody>
 					{#each filtered as s (s.id)}
-						{@const withN = partnersOf(store, s.id, 'with').length}
-						{@const apartN = partnersOf(store, s.id, 'apart').length}
+						{@const lc = linkCounts.get(s.id)}
+						{@const withN = lc?.with ?? 0}
+						{@const apartN = lc?.apart ?? 0}
 						<tr
 							class="border-b border-slate-100 hover:bg-indigo-50/40 {selectedId === s.id
 								? 'bg-indigo-50'
@@ -181,12 +202,13 @@
 				</tbody>
 			</table>
 		</div>
-
-		<!-- Vue mobile : cartes empilées (le tableau ci-dessus est masqué sous md). -->
-		<div class="min-h-0 flex-1 space-y-2 overflow-auto md:hidden">
+		{:else}
+		<!-- Vue mobile : cartes empilées (montée seule sous md, voir MediaQuery). -->
+		<div class="min-h-0 flex-1 space-y-2 overflow-auto">
 			{#each filtered as s (s.id)}
-				{@const withN = partnersOf(store, s.id, 'with').length}
-				{@const apartN = partnersOf(store, s.id, 'apart').length}
+				{@const lc = linkCounts.get(s.id)}
+				{@const withN = lc?.with ?? 0}
+				{@const apartN = lc?.apart ?? 0}
 				{@const opts = optionNames(store, s)}
 				<button
 					type="button"
@@ -239,6 +261,7 @@
 				</p>
 			{/if}
 		</div>
+		{/if}
 	</div>
 
 	{#if selected}
