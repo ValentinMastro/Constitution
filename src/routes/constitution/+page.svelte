@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { MediaQuery } from 'svelte/reactivity';
 	import ClassColumn from '$lib/components/ClassColumn.svelte';
 	import StudentClassMenu from '$lib/components/StudentClassMenu.svelte';
@@ -17,7 +18,22 @@
 	const store = $derived(project.current!);
 	const levels = $derived([...store.levels.items].sort((a, b) => a.order - b.order));
 
+	// Mémorise le dernier niveau travaillé, par projet, pour le retrouver en
+	// revenant sur la page (l'état local est perdu au démontage du composant).
+	const lastLevelKey = (pid: string) => `cc-last-level-${pid}`;
 	let selectedLevelId = $state('');
+	// Restaure le niveau mémorisé (ou le premier) et garde selectedLevelId valide.
+	$effect(() => {
+		const ids = levels.map((l) => l.id);
+		if (ids.length === 0) return;
+		if (selectedLevelId && ids.includes(selectedLevelId)) return;
+		const saved = browser ? localStorage.getItem(lastLevelKey(store.id)) : null;
+		selectedLevelId = saved && ids.includes(saved) ? saved : ids[0];
+	});
+	// Persiste à chaque changement valide.
+	$effect(() => {
+		if (browser && selectedLevelId) localStorage.setItem(lastLevelKey(store.id), selectedLevelId);
+	});
 	const levelId = $derived(selectedLevelId || levels[0]?.id || '');
 	const classes = $derived(levelId ? classesOfLevel(store, levelId) : []);
 	const levelOptions = $derived(levelId ? optionsForLevel(store, levelId) : []);
